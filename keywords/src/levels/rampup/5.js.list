@@ -1,0 +1,45 @@
+Reversing Changes in Git
+変更を元に戻す
+
+## Reversing Changes in Git
+## 変更を元に戻す
+
+There are many ways to reverse changes in Git. And just like committing, reversing changes in Git has both a low-level component (staging individual files or chunks) and a high-level component (how the changes are actually reversed). Our application will focus on the latter.
+Gitでは変更を元に戻す方法がたくさんあります。コミットと同じように、低レベルな動作（ファイル別だったりファイルの中の一部だったり）も高レベルな動作（変更のまとまりのキャンセル）もできます。このアプリケーションでは後者の方法について紹介します。
+
+There are two primary ways to undo changes in Git -- one is using `git reset` and the other is using `git revert`. We will look at each of these in the next dialog
+基本的なアンドゥの方法が2つあります - 一つは`git reset`を使う方法で、もう1つは`git revert`を使う方法です。次のダイアログで一つ一つを見ていきます。
+
+## Git Reset
+## Git Reset
+
+`git reset` reverts changes by moving a branch reference backwards in time to an older commit. In this sense you can think of it as \"rewriting history;\" `git reset` will move a branch backwards as if the commit had never been made in the first place.
+`git reset`はブランチのポインタを後方に移動することで変更のキャンセルを実現します。履歴を上書きするような動作だと思うと良いでしょうか：`git reset`はそもそも前のコミットなんかなかったかのように、ブランチのポインタを元に戻してくれます。
+
+Let's see what that looks like:
+どういう感じか見てみましょう。
+
+Nice! Git simply moved the master branch reference back to `C1`; now our local repository is in a state as if `C2` had never happened
+いいですね！Gitは単純にmasterブランチへのポインタを`C1`へ戻しました。これでこのローカルリポジトリにはまるで`C2`なんて無かったかのように変更をキャンセルできました。
+
+## Git Revert
+## Git Revert
+
+While reseting works great for local branches on your own machine, it's method of \"rewriting history\" doesn't work for remote branches that others are using.
+自分のマシン上のブランチではさっきの`git reset`でうまくいきましたが、この「履歴を上書きする」手段は、他の人も使っているリモートにあるリポジトリに対しては使うことができません。
+
+In order to reverse changes and *share* those reversed changes with others, we need to use `git revert`. Let's see it in action
+変更を巻き戻して他の人とそれを共有するためには、`git revert`を使う必要があります。今度はこれを見てみましょう。
+
+Weird, a new commit plopped down below the commit we wanted to reverse. That's because this new commit `C2'` introduces *changes* -- it just happens to introduce changes that exactly reverses the commit of `C2`.
+あれ、おかしいな。巻き戻したいと思ってたコミットの下に新しいコミットが出来上がってしまったみたいです。なぜか。これは、この新しい`C2'`コミットは`C2`へ戻すのに必要な内容を確かに変更して巻き戻していたのです。
+
+With reverting, you can push out your changes to share with others.
+こんな風にして、巻き戻した内容を他人と共有するためにはrevertを使います。
+
+To complete this level, reverse the two most recent commits on both `local` and `pushed`.
+この章の仕上げに、`local`と`pushed`の両方の直近のコミットを巻き戻してみましょう。
+
+Keep in mind that `pushed` is a remote branch and `local` is a local branch -- that should help you chose your methods.
+`pushed`はリモートのブランチで、`local`はローカルであることに注意。正しくコマンドを使い分けましょう。
+

@@ -1,0 +1,47 @@
+Welcome to LearnGitBranching!
+LearnGitBranchingへようこそ
+
+This application is designed to help beginners grasp
+gitのパワフルなブランチ機能のコンセプトが
+
+the powerful concepts behind branching when working
+学びやすくなるようにこのアプリケーションを作りました。
+
+with git. We hope you enjoy this application and maybe
+このアプリケーションを楽しんで使って頂いて、
+
+even learn something!
+何かを学習して頂けたなら嬉しいです。
+
+# Demo!
+# とりあえず触ってみたい方へ：
+
+If you have not seen the demo, please check it out here:
+簡単なデモを用意してあるので、もしよければこちらもご覧ください：
+
+[http://pcottle.github.com/learnGitBranching/?demo](http://pcottle.github.com/learnGitBranching/?demo)
+[http://remore.github.com/learnGitBranching-ja/?demo](http://remore.github.com/learnGitBranching-ja/?demo)
+
+Annoyed at this dialog? Append `?NODEMO` to the url to get rid of it, linked below for convenience:
+このダイアログ自体を省略するには、以下のようにURLの末尾にクエリストリング`?NODEMO`を付加してアクセスしてください。
+
+[http://pcottle.github.com/learnGitBranching/?NODEMO](http://pcottle.github.com/learnGitBranching/?NODEMO)
+[http://remore.github.com/learnGitBranching-ja/?NODEMO](http://remore.github.com/learnGitBranching-ja/?NODEMO)
+
+## Git commands
+## ここで学べるGitのオペレーション
+
+You have a large variety of git commands available in sandbox mode. These include
+ここでは、下記の種類のgitコマンドを学ぶことができます。
+
+Sharing is caring!
+学習した内容を共有できます
+
+Share trees with your friends via `export tree` and `import tree`
+画面左のコマンドプロンプトから`export tree`や`import tree`とタイプすることで、gitのツリー構造を友達に送ることができます
+
+Have a great lesson to share? Try building a level with `build level` or try out a friend\'s level with `import level`
+何か教材になるようなケースはご存知ないでしょうか。`build level`で課題を作成したり、`import level`で他の人の課題に挑戦してみてください。
+
+For now let\'s get you started on the `levels`...
+それでは教材の選択画面に進んでみることにします。

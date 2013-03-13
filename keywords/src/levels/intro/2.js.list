@@ -1,0 +1,50 @@
+Make a new branch with \"git branch [name]\" and check it out with \"git checkout [name]\"
+ブランチの作成（\"git branch [ブランチ名]\"）と、チェックアウト（\"git checkout [ブランチ名]\"）
+
+## Git Branches
+## Gitのブランチ
+
+Branches in Git are incredibly lightweight as well. They are simply references to a specific commit -- nothing more. This is why many Git enthusiasts chant the mantra:
+Gitではコミットだけでなく、ブランチもまた信じられないほど軽量です。ブランチとは単に特定のコミットを指示したポインタにしか過ぎません。Gitの達人は決まってこう言うのは、そのためです：
+
+branch early, and branch often
+早めに、かつ頻繁にブランチを切りなさい
+
+Because there is no storage / memory overhead with making many branches, it's easier to logically divide up your work than have big beefy branches.
+どれほど多くのブランチを作ってもストレージやメモリを全然使わないので、ブランチを肥大化させるよりも論理的に分割していく方が簡単なのです。
+
+When we start mixing branches and commits, we will see how these two features combine. For now though, just remember that a branch essentially says \"I want to include the work of this commit and all parent commits.\"
+ブランチとコミットをあわせて使い始めると、これら2つのフィーチャがどのように連動して機能するかがわかるでしょう。ここではとりあえず、ブランチは基本的には「あるコミットとその親のコミットたちを含めた全てのコミット」のことを呼ぶと覚えておいてください。
+
+Let's see what branches look like in practice.
+では実際にブランチがどのようなものかを見ていきましょう。
+
+Here we will check out a new branch named `newImage`
+`newImage`という名前の新しいブランチを切ってみることにします。
+
+There, that's all there is to branching! The branch `newImage` now refers to commit `C1`
+以上。必要な手順はこれだけです。いま作成された`newImage`ブランチは`C1`コミットを指しています。
+
+Let's try to put some work on this new branch. Hit the button below
+この新しいブランチに何か変更を加えてみましょう。次のボタンを押してください。
+
+Oh no! The `master` branch moved but the `newImage` branch didn't! That's because we weren't \"on\" the new branch, which is why the asterisk (*) was on `master`
+あれ？`newImage`ではなくて`master`ブランチが移動してしまいました。これは、私たちが`newImage`のブランチ上で作業していなかったためです。どのブランチで作業しているかは、アスタリスク(*)がついてるかどうかで分かります。
+
+Let's tell git we want to checkout the branch with
+今度は作業したいブランチ名をgitに伝えてみましょう。
+
+git checkout [name]
+git checkout [ブランチ名]
+
+This will put us on the new branch before committing our changes
+このようにして、コミットする前に新しいブランチへと作業ブランチを移動することができます。
+
+There we go! Our changes were recorded on the new branch
+できましたね。今度は新しいブランチに対して変更を記録することができました。
+
+Ok! You are all ready to get branching. Once this window closes,
+OK! もうどんなブランチでも切れますね。このウィンドウを閉じて、
+
+make a new branch named `bugFix` and switch to that branch
+`bugFix`という名前のブランチを作成し、そのブランチをチェックアウトしてみましょう。

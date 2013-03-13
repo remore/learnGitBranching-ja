@@ -1,0 +1,62 @@
+Remember to commit in the order specified (bugFix before master)
+指示された順番でコミットすること（masterの前にbugFixで）
+
+## Branches and Merging
+## ブランチとマージ
+
+Great! We now know how to commit and branch. Now we need to learn some kind of way of combining the work from two different branches together. This will allow us to branch off, develop a new feature, and then combine it back in.
+いい調子ですね。これまでにコミットとブランチについて学びました。そろそろ2つのブランチを1つにまとめるやり方について見ていきましょう。これができれば新しいフィーチャの開発のために新しいブランチを切って、開発が終わったら変更を元のブランチへ統合することができるようになります。
+
+The first method to combine work that we will examine is `git merge`. Merging in Git creates a special commit that has two unique parents. A commit with two parents essentially means \"I want to include all the work from this parent over here and this one over here, *and* the set of all their parents.\"
+はじめに紹介するのは、`git merge`を使ったマージのやり方です。mergeコマンドによって、2つの独立した親を持つ特別なコミットを作ることができます。2つの親を持つコミットが持つ意味とは、「全く別々の場所にいるこの親とその親（*かつ*、それらの親の祖先全て）が持つ全ての変更を含んでいますよ」ということです。
+
+It's easier with visuals, let's check it out in the next view
+見てみた方が早いので、次の画面で確認してみましょう。
+
+Here we have two branches; each has one commit that's unique. This means that neither branch includes the entire set of \"work\" in the repository that we have done. Let's fix that with merge.
+それぞれ別のコミットを指している2つのブランチがあります。変更が別々のブランチに分散していて統合されていないケースです。これをマージで1つにまとめてみましょう。
+
+We will `merge` the branch `bugFix` into `master`
+`bugFix`ブランチを`master`ブランチにマージしてみます。
+
+Woah! See that? First of all, `master` now points to a commit that has two parents. If you follow the arrows upstream from `master`, you will hit every commit along the way to the root. This means that `master` contains all the work in the repository now.
+わあ。見ましたか？まず初めに、`master`ブランチが2つのコミットを親に持つ新しいコミットを指してますね。`master`から親をたどっていくと、最も古いコミットにたどり着くまでに全てのコミットを含んでいる様が確認できます。これで、全ての変更を含む`master`が完成しました。
+
+Also, see how the colors of the commits changed? To help with learning, I have included some color coordination. Each branch has a unique color. Each commit turns a color that is the blended combination of all the branches that contain that commit.
+色がどう変わったかにも注目して下さい。学習を助けるために、ブランチ毎に色をつけています。それぞれのブランチは自分の色を持っていて、どのブランチから派生して出てくるか次第でコミットごとの色が決まります。
+
+So here we see that the `master` branch color is blended into all the commits, but the `bugFix` color is not. Let's fix that...
+今回のコミットには`master`ブランチの色が使われました。しかし`bugFix`ブランチの色がまだ変わってないようなので、これを変えてみましょう。
+
+Let's merge `master` into `bugFix`:
+`master`ブランチを`bugFix`ブランチにマージしてみます。
+
+Since `bugFix` was downstream of `master`, git didn't have to do any work; it simply just moved `bugFix` to the same commit `master` was attached to.
+`bugFix`ブランチは`master`ブランチの派生元だったので、gitは実際大したことはしていません：`bugFix`ブランチを指していたポインタを`master`が指していたコミットへと移動させただけです。
+
+Now all the commits are the same color, which means each branch contains all the work in the repository! Woohoo
+これで全てのコミットが同じ色になりました。つまり、リポジトリの中の全ての変更をそれぞれのブランチが持ったことになります。やったね！
+
+To complete this level, do the following steps:
+今回のレベルの仕上げに、下記の手順を試してみましょう：
+
+* Make a new branch called `bugFix`
+* `bugFix`という名前で新しいブランチを切る
+
+* Checkout the `bugFix` branch with `git checkout bugFix`
+* `git checkout bugFix`コマンドで`bugFix`ブランチをチェックアウトする
+
+* Commit once
+* 一回だけコミットする
+
+* Go back to `master` with `git checkout`
+* `git checkout`で`master`へ戻る
+
+* Commit another time
+* もう1回コミットする
+
+* Merge the branch `bugFix` into `master` with `git merge`
+* `git merge`コマンドを使って、`bugFix`ブランチを`master`ブランチへとマージする
+
+*Remember, you can always re-display this dialog with \"help level\"!*
+*注：\"help level\"コマンドでこのヘルプにいつでも戻ってこれます*

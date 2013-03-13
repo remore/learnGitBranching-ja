@@ -1,0 +1,8 @@
+## Great Job!!
+## 完成!
+
+You solved the level in *{numCommands}* command(s); 
+あなたは*{numCommands}*回のコマンドでこの課題をクリアしました; 
+
+our solution uses {best}.
+模範解答では{best}回です。

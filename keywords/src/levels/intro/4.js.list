@@ -1,0 +1,59 @@
+Rebase Introduction
+Rebaseの解説
+
+Make sure you commit from bugFix first
+初めにbugFixを指した状態でコミットする
+
+## Git Rebase
+## Git Rebase
+
+The second way of combining work between branches is *rebasing.* Rebasing essentially takes a set of commits, \"copies\" them, and plops them down somewhere else.
+ブランチを一つにまとめる方法として前回はマージを紹介しましたが、今回紹介するリベースを使うこともできます。リベースの動作は、マージするコミットのコピーをとって、どこかにストンと落とすというイメージです。
+
+While this sounds confusing, the advantage of rebasing is that it can be used to make a nice linear sequence of commits. The commit log / history of the repository will be a lot cleaner if only rebasing is allowed.
+ピンと来ないかもしれませんが、リベースのメリットは一本の連続したシーケンシャルなコミットに整形できることです。リベースだけ使っていると、コミットのログや履歴が非常にクリーンな状態に保たれます。
+
+Let's see it in action...
+早速実際にどう動くのかを見てみましょう。
+
+Here we have two branches yet again; note that the bugFix branch is currently selected (note the asterisk)
+前回と同様の2つのブランチを考えます：仮にいまbugFixブランチをチェックアウトしているとします。（アスタリスクつきのもの）
+
+We would like to move our work from bugFix directly onto the work from master. That way it would look like these two features were developed sequentially, when in reality they were developed in parallel.
+bugFixに入ってる作業内容をそのまま直接masterブランチ上の内容に移動したいとします。こうすることで、実際には並行して開発された2つの別々のブランチ上のフィーチャを、あたかも1本のブランチ上でシーケンシャルに開発されていたかのように見せることができます。
+
+Let's do that with the `git rebase` command
+`git rebase`コマンドでそれをやってみましょう。
+
+Awesome! Now the work from our bugFix branch is right on top of master and we have a nice linear sequence of commits.
+できた！これでbugFixブランチの作業内容はmasterブランチのすぐ先に移動したので、見た目が一本になってスッキリしました。
+
+Note that the commit C3 still exists somewhere (it has a faded appearance in the tree), and C3' is the \"copy\" that we rebased onto master.
+気を付けてほしいのは、C3コミットはどこかに残ってるということ（ツリーの中で半透明にしてあります）、そしてC3'は（C3との接続が切れているC3の）コピーがmasterブランチ上に作られているということです。
+
+The only problem is that master hasn't been updated either, let's do that now...
+一つ問題が残ってて、masterブランチがまだ最新化されていませんね。ちょっと直してみましょう。。
+
+Now we are checked out on the `master` branch. Let's do ahead and rebase onto `bugFix`...
+masterブランチはチェックアウトしてあります。この状態からmasterブランチを`bugFix`へとリベースしてみましょう。
+
+There! Since `master` was downstream of `bugFix`, git simply moved the `master` branch reference forward in history.
+できた！`master`は`bugFix`の直前のコミットだったので、gitは単純に`master`ブランチのポインタを前に進めただけでした。
+
+To complete this level, do the following
+以下の作業で理解度の確認をしてみましょう。
+
+* Checkout a new branch named `bugFix`
+* `bugFix`という名前の新しいブランチをチェックアウトする
+
+* Commit once
+* 一回だけコミット
+
+* Go back to master and commit again
+* masterブランチに戻ってもう1回コミット
+
+* Check out bugFix again and rebase onto master
+* bugFixをもう1回チェックアウトして、master上にリベース
+
+Good luck!
+幸運を祈る！
