@@ -4,12 +4,11 @@
 ## 概要
 * Peter M Cottleさん作のGit学習ツールの使い心地が良かったので日本語化作業中
 * グラフィカルにgitの基本的な操作を学習できて便利。というのを[HackerNewsで見て](http://news.ycombinator.com/item?id=5232415)知ったので、翻訳を申し出たらOKが出た
-* 作業途中のバージョンはこちら [http://k.swd.cc/learnGitBranching-ja](http://k.swd.cc/learnGitBranching-ja)
+* 作業途中のバージョンはこちら⇒ [http://remore.github.com/learnGitBranching-ja](http://remore.github.com/learnGitBranching-ja)
 
 ## 今後の予定とか
 * 今のところ半分くらい教材の翻訳が完了
-* 翻訳が完了したら[本家リポジトリ](https://github.com/pcottle/learnGitBranching)に取り込んでもらえるらしい
-** ここはlearnGitBranchingの作業場所兼PR用のリポジトリ
+* 翻訳が完了したら[本家リポジトリ](https://github.com/pcottle/learnGitBranching)に取り込んでもらえるらしい（ここはlearnGitBranchingの作業用のリポジトリ）
 * ライセンスは本家リポジトリに倣ってMIT Licenseで運用
 
 ## 画面イメージはこんな感じ
