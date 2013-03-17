@@ -6620,7 +6620,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-lose': {
     '__desc__': 'When the user entered more commands than our best, encourage them to do better',
-    'en_US': 'See if you can whittle it down to {best} :D',
+    'en_US': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
     'zh_CN': '试试看你能否在 {best} 之内搞定 :D'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -19282,7 +19282,7 @@ require.define("/levels/rebase/1.js",function(require,module,exports,__dirname,_
     "zh_CN": "衍合一百遍啊一百遍"
   },
   "hint": {
-    "en_US": "Remember, the most efficient way might be to only update master at the end...",
+    "en_US": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
     "ko": "아마도 master를 마지막에 업데이트하는 것이 가장 효율적인 방법일 것입니다...",
     "zh_CN": "记住，可能最终最高效的方法就是更新主分支（master）……"
   },
@@ -19293,13 +19293,13 @@ require.define("/levels/rebase/1.js",function(require,module,exports,__dirname,_
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "### Rebasing Multiple Branches",
+              "### 複数のブランチをリベースする",
               "",
-              "Man, we have a lot of branches going on here! Let's rebase all the work from these branches onto master.",
+              "さあ、いくつものブランチが出てきます。このブランチたち全てをmasterブランチにリベースしましょう。",
               "",
-              "Upper management is making this a bit trickier though -- they want the commits to all be in sequential order. So this means that our final tree should have `C7'` at the bottom, `C6'` above that, etc etc, etc all in order.",
+              "おエライさん方が今回の仕事を少しトリッキーにしてくれました ― コミットはすべて一列のシーケンシャルな状態にしてほしいそうです。つまり私たちが作るリポジトリの最終的なツリーの状態は、`C7'`が最後に来て、`C6'`がその一つ上に来て、、と順に積み重なるイメージです。",
               "",
-              "If you mess up along the way, feel free to use `reset` to start over again. Be sure to check out our solution and see if you can do it in fewer commands!"
+              "試行錯誤してツリーが汚くなってきたら、`reset`コマンドを使ってツリーの状態を初期化してください。模範解答をチェックして、それよりも簡単なコマンドで済ませられるかどうか、を考えるのも忘れずに！"
             ]
           }
         }
@@ -19355,11 +19355,11 @@ require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,_
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C5\",\"id\":\"master\"},\"one\":{\"target\":\"C1\",\"id\":\"one\"},\"two\":{\"target\":\"C1\",\"id\":\"two\"},\"three\":{\"target\":\"C1\",\"id\":\"three\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C4\"],\"id\":\"C5\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
     "ko": "브랜치 스파게티",
-    "en_US": "Branch Spaghetti",
+    "en_US": "ブランチスパゲッティ",
     "zh_CN": "分支浆糊"
   },
   "hint": {
-    "en_US": "Make sure to do everything in the proper order! Branch one first, then two, then three",
+    "en_US": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
     "ko": "이 문제를 해결하는 방법은 여러가지가 있습니다! 체리픽(cherry-pick)이 가장 쉽지만 오래걸리는 방법이고, 리베이스(rebase -i)가 빠른 방법입니다",
     "zh_CN": "确保你是按照正确的顺序来操作！先操作分支 `one`, 然后 `two`, 最后才是 `three`"
   },
@@ -19370,15 +19370,15 @@ require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,_
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Branch Spaghetti",
+              "## ブランチスパゲッティ",
               "",
-              "WOAHHHhhh Nelly! We have quite the goal to reach in this level.",
+              "なんということでしょう。今回のレベルクリアのために、やることがたくさんあります。",
               "",
-              "Here we have `master` that is a few commits ahead of branches `one` `two` and `three`. For whatever reason, we need to update these three other branches with modified versions of the last few commits on master.",
+              "いま`master`が指しているコミットの数個前のコミットに、ブランチ`one`、`two`それから`three`があります。何か事情があって、これらの3つのブランチをmasterが指している最新の状態に更新したいケースを考えます。",
               "",
-              "Branch `one` needs a re-ordering and a deletion of `C5`. `two` needs pure reordering, and `three` only needs one commit!",
+              "ブランチ`one`に対しては、順序の変更と`C5`の削除が必要です。`two`では順序の変更のみ、`three`に対しては1回だけコミットすればOKです。",
               "",
-              "We will let you figure out how to solve this one -- make sure to check out our solution afterwards with `show solution`. "
+              "`show solution`コマンドで模範解答を確認できますから、こちらも利用してください。 "
             ]
           }
         }
@@ -19390,7 +19390,7 @@ require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,_
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Branch Spaghetti",
+              "## ブランチスパゲッティ",
               "",
               "哇塞大神！这关我们要来点不同的！",
               "",
@@ -19443,7 +19443,7 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
     "zh_CN": "私藏一个提交"
   },
   "hint": {
-    "en_US": "Remember, interactive rebase or cherry-pick is your friend here",
+    "en_US": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
     "ko": "대화식 리베이스(rebase -i)나 or 체리픽(cherry-pick)을 사용하세요",
     "zh_CN": "记住，交互式 rebase 或者 cherry-pick 会很有帮助"
   },
@@ -19454,13 +19454,13 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Locally stacked commits",
+              "## ローカルに積み上がったコミット",
               "",
-              "Here's a development situation that often happens: I'm trying to track down a bug but it is quite elusive. In order to aid in my detective work, I put in a few debug commands and a few print statements.",
+              "実際の開発ではこういうケースがよくあります：「バグの原因調査を試みているがバグの再現性がかなり低い。調査の補助のために、いくつかのデバッグ用の命令やprint文を差し込んでいる。」",
               "",
-              "All of these debugging / print statements are in their own branches. Finally I track down the bug, fix it, and rejoice!",
+              "これらのデバッグ用のコードはバグ修正用のブランチにコミットされています。そしてついにバグの原因を突き止めて、修正した！やった！",
               "",
-              "Only problem is that I now need to get my `bugFix` back into the `master` branch! I could simply fast-forward `master`, but then `master` would get all my debug statements."
+              "あとは`bugFix`ブランチを`master`ブランチに統合できればOK。そこで単純に`master`をfast-forwardすればよいかというと、それでは`master`ブランチの中にデバッグ用のコードも混入してしまいます。"
             ]
           }
         },
@@ -19468,14 +19468,14 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "This is where the magic of Git comes in. There are a few ways to do this, but the two most straightforward ways are:",
+              "ここでGitの魔法が力を発揮します。解決のためにはいくつかの方法がありますが、最も素直な解決方法は2つあって：",
               "",
               "* `git rebase -i`",
               "* `git cherry-pick`",
               "",
-              "Interactive (the `-i`) rebasing allows you to choose which commits you want to keep or discard. It also allows you to reorder commits. This can be helpful if you want to toss out some work.",
+              "インタラクティブモードの（`-i`オプションつきの）rebaseによって、保持したいコミットと破棄したいコミットを選り分けることができます。コミットの順序を変更することも可能です。この方法は、一部の変更をどこかへやってしまいたい時に便利です。",
               "",
-              "Cherry-picking allows you to pick individual commits and plop them down on top of `HEAD`"
+              "もう一方のcherry-pickを使うと、持っていきたいコミットを選んで`HEAD`の先にストンと落とすことができます。"
             ]
           }
         },
@@ -19483,7 +19483,7 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "This is a later level so we will leave it up to you to decide, but in order to complete the level, make sure `master` receives the commit that `bugFix` references."
+              "後半の章ですのでどう解決するかをもう自分で考えることができると思います。このレベルをクリアするためには、`bugFix`が持っているコミットを`master`ブランチが受け取る必要がある点には注意してください。"
             ]
           }
         }
@@ -19591,7 +19591,7 @@ require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__
     "zh_CN": "提交变换戏法"
   },
   "hint": {
-    "en_US": "The first command is git rebase -i HEAD~2",
+    "en_US": "最初に打つコマンドはgit rebase -i HEAD~2",
     "ko": "첫번째 명령은 git rebase -i HEAD~2 입니다",
     "zh_CN": "第一个命令是 'git rebase -i HEAD~2'"
   },
@@ -19602,11 +19602,11 @@ require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Juggling Commits",
+              "## Commitsをやりくりする",
               "",
-              "Here's another situation that happens quite commonly. You have some changes (`newImage`) and another set of changes (`caption`) that are related, so they are stacked on top of each other in your repository (aka one after another).",
+              "開発中に頻繁に起こるケースをもう1つ考えます。ある変更（`newImage`）とまた別の変更（`caption`）があって、それらに依存関係があるとします。この一連の変更が一列に積み重なっているとします。",
               "",
-              "The tricky thing is that sometimes you need to make a small modification to an earlier commit. In this case, design wants us to change the dimensions of `newImage` slightly, even though that commit is way back in our history!!"
+              "ここでトリッキーなのは、以前のコミットに対して微修正をかけなければならないケースがあるということです。今回の教材でも、過去のコミットであるにも関わらず`newImage`ブランチに僅かな修正を加えるような設計の修正が入ったとしましょう。"
             ]
           }
         },
@@ -19614,14 +19614,14 @@ require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "We will overcome this difficulty by doing the following:",
+              "この困難な状況を、以下の手順で克服することを考えます：",
               "",
-              "* We will re-order the commits so the one we want to change is on top with `git rebase -i`",
-              "* We will `commit --amend` to make the slight modification",
-              "* Then we will re-order the commits back to how they were previously with `git rebase -i`",
-              "* Finally, we will move master to this updated part of the tree to finish the level (via the method of your choosing)",
+              "* `git rebase -i`を使って順番を変更する。これで、変更をかけたいコミットを一番先頭に持ってくる。",
+              "* `commit --amend`コマンドで僅かな変更を行う",
+              "* `git rebase -i`コマンドを再度使って、先頭に持ってきていたコミットを元に戻す",
+              "* 最後に、レベルクリアのためにmasterブランチを先頭に持ってくる",
               "",
-              "There are many ways to accomplish this overall goal (I see you eye-ing cherry-pick), and we will see more of them later, but for now let's focus on this technique."
+              "クリアのための方法はいくつもありますが（cherry-pickを使うこともできます）、別の回答はまた後程の章で見ることにんして、今回は上記の方法でやってみることにしましょう。"
             ]
           }
         },
@@ -19629,7 +19629,7 @@ require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "Lastly, pay attention to the goal state here -- since we move the commits twice, they both get an apostrophe appended. One more apostrophe is added for the commit we amend, which gives us the final form of the tree "
+              "最後に、ゴール時点での状態に気を付けてください。今回2回ほどコミットを動かしますから、コミットへのポインタにはアポストロフィ（'）が追加されます。commit --amendコマンドの実行でできたコミットには更にもう1つのアポストロフィが追加されます。 "
             ]
           }
         }
@@ -19728,11 +19728,11 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
   "compareOnlyMaster": true,
   "name": {
     "ko": "커밋 갖고 놀기 #2",
-    "en_US": "Juggling Commits #2",
+    "en_US": "コミットをやりくりする その2",
     "zh_CN": "提交交换戏法 #2"
   },
   "hint": {
-    "en_US": "Don't forget to forward master to the updated changes!",
+    "en_US": "masterのポインタを先に進めることを忘れずに！",
     "ko": "master를 변경 완료한 커밋으로 이동(forward)시키는 것을 잊지 마세요!",
     "zh_CN": "别忘记了将 master 快进到最新的更新上！"
   },
@@ -19743,13 +19743,13 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Juggling Commits #2",
+              "## Commitsをやりくりする #2",
               "",
-              "*If you haven't completed Juggling Commits #1 (the previous level), please do so before continuing*",
+              "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
               "",
-              "As you saw in the last level, we used `rebase -i` to reorder the commits. Once the commit we wanted to change was on top, we could easily --amend it and re-order back to our preferred order.",
+              "前回見てきたように、コミット順序の変更のために、私たちは`rebase -i`コマンドを利用しました。ツリーの先頭に変更対象のコミットがあれば、--amendオプションを使うことで容易に変更を書きかえて、元の順序に戻すことができます。",
               "",
-              "The only issue here is that there is a lot of reordering going on, which can introduce rebase conflicts. Let's look at another method with `git cherry-pick`"
+              "この場合に心配なことが一つだけあって、それは複数回の順序の変更が行われるので、rebaseのコンフリクト（衝突）が起こりうることです。こういうケースへの対策として、`git cherry-pick`を使った別の解決法について考えてみましょう。"
             ]
           }
         },
@@ -19757,12 +19757,12 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "Remember that git cherry-pick will plop down a commit from anywhere in the tree onto HEAD (as long as that commit isn't upstream).",
+              "git cherry-pickを使うと、ツリーの中から複数のコミットを選んで、HEADの下に新しく作ることができましたね。",
               "",
-              "Here's a small refresher demo:"
+              "簡単なデモを見てみましょう："
             ],
             "afterMarkdowns": [
-              "Nice! Let's move on"
+              "できました！次へ進みましょう"
             ],
             "command": "git cherry-pick C2",
             "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
@@ -19772,7 +19772,7 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "So in this level, let's accomplish the same objective of amending `C2` once but avoid using `rebase -i`. I'll leave it up to you to figure it out! :D"
+              "このレベルでは、`C2`をamendすることで前回と同じ目的を達成しましょう。但し`rebase -i`は使わずにクリアしてください。どんな方法で進めるかはあなたにおまかせします！:D"
             ]
           }
         }
@@ -24139,7 +24139,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-lose': {
     '__desc__': 'When the user entered more commands than our best, encourage them to do better',
-    'en_US': 'See if you can whittle it down to {best} :D',
+    'en_US': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
     'zh_CN': '试试看你能否在 {best} 之内搞定 :D'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -33214,7 +33214,7 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
     "zh_CN": "私藏一个提交"
   },
   "hint": {
-    "en_US": "Remember, interactive rebase or cherry-pick is your friend here",
+    "en_US": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
     "ko": "대화식 리베이스(rebase -i)나 or 체리픽(cherry-pick)을 사용하세요",
     "zh_CN": "记住，交互式 rebase 或者 cherry-pick 会很有帮助"
   },
@@ -33225,13 +33225,13 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Locally stacked commits",
+              "## ローカルに積み上がったコミット",
               "",
-              "Here's a development situation that often happens: I'm trying to track down a bug but it is quite elusive. In order to aid in my detective work, I put in a few debug commands and a few print statements.",
+              "実際の開発ではこういうケースがよくあります：「バグの原因調査を試みているがバグの再現性がかなり低い。調査の補助のために、いくつかのデバッグ用の命令やprint文を差し込んでいる。」",
               "",
-              "All of these debugging / print statements are in their own branches. Finally I track down the bug, fix it, and rejoice!",
+              "これらのデバッグ用のコードはバグ修正用のブランチにコミットされています。そしてついにバグの原因を突き止めて、修正した！やった！",
               "",
-              "Only problem is that I now need to get my `bugFix` back into the `master` branch! I could simply fast-forward `master`, but then `master` would get all my debug statements."
+              "あとは`bugFix`ブランチを`master`ブランチに統合できればOK。そこで単純に`master`をfast-forwardすればよいかというと、それでは`master`ブランチの中にデバッグ用のコードも混入してしまいます。"
             ]
           }
         },
@@ -33239,14 +33239,14 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "This is where the magic of Git comes in. There are a few ways to do this, but the two most straightforward ways are:",
+              "ここでGitの魔法が力を発揮します。解決のためにはいくつかの方法がありますが、最も素直な解決方法は2つあって：",
               "",
               "* `git rebase -i`",
               "* `git cherry-pick`",
               "",
-              "Interactive (the `-i`) rebasing allows you to choose which commits you want to keep or discard. It also allows you to reorder commits. This can be helpful if you want to toss out some work.",
+              "インタラクティブモードの（`-i`オプションつきの）rebaseによって、保持したいコミットと破棄したいコミットを選り分けることができます。コミットの順序を変更することも可能です。この方法は、一部の変更をどこかへやってしまいたい時に便利です。",
               "",
-              "Cherry-picking allows you to pick individual commits and plop them down on top of `HEAD`"
+              "もう一方のcherry-pickを使うと、持っていきたいコミットを選んで`HEAD`の先にストンと落とすことができます。"
             ]
           }
         },
@@ -33254,7 +33254,7 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "This is a later level so we will leave it up to you to decide, but in order to complete the level, make sure `master` receives the commit that `bugFix` references."
+              "後半の章ですのでどう解決するかをもう自分で考えることができると思います。このレベルをクリアするためには、`bugFix`が持っているコミットを`master`ブランチが受け取る必要がある点には注意してください。"
             ]
           }
         }
@@ -33363,7 +33363,7 @@ require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirnam
     "zh_CN": "提交变换戏法"
   },
   "hint": {
-    "en_US": "The first command is git rebase -i HEAD~2",
+    "en_US": "最初に打つコマンドはgit rebase -i HEAD~2",
     "ko": "첫번째 명령은 git rebase -i HEAD~2 입니다",
     "zh_CN": "第一个命令是 'git rebase -i HEAD~2'"
   },
@@ -33374,11 +33374,11 @@ require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Juggling Commits",
+              "## Commitsをやりくりする",
               "",
-              "Here's another situation that happens quite commonly. You have some changes (`newImage`) and another set of changes (`caption`) that are related, so they are stacked on top of each other in your repository (aka one after another).",
+              "開発中に頻繁に起こるケースをもう1つ考えます。ある変更（`newImage`）とまた別の変更（`caption`）があって、それらに依存関係があるとします。この一連の変更が一列に積み重なっているとします。",
               "",
-              "The tricky thing is that sometimes you need to make a small modification to an earlier commit. In this case, design wants us to change the dimensions of `newImage` slightly, even though that commit is way back in our history!!"
+              "ここでトリッキーなのは、以前のコミットに対して微修正をかけなければならないケースがあるということです。今回の教材でも、過去のコミットであるにも関わらず`newImage`ブランチに僅かな修正を加えるような設計の修正が入ったとしましょう。"
             ]
           }
         },
@@ -33386,14 +33386,14 @@ require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "We will overcome this difficulty by doing the following:",
+              "この困難な状況を、以下の手順で克服することを考えます：",
               "",
-              "* We will re-order the commits so the one we want to change is on top with `git rebase -i`",
-              "* We will `commit --amend` to make the slight modification",
-              "* Then we will re-order the commits back to how they were previously with `git rebase -i`",
-              "* Finally, we will move master to this updated part of the tree to finish the level (via the method of your choosing)",
+              "* `git rebase -i`を使って順番を変更する。これで、変更をかけたいコミットを一番先頭に持ってくる。",
+              "* `commit --amend`コマンドで僅かな変更を行う",
+              "* `git rebase -i`コマンドを再度使って、先頭に持ってきていたコミットを元に戻す",
+              "* 最後に、レベルクリアのためにmasterブランチを先頭に持ってくる",
               "",
-              "There are many ways to accomplish this overall goal (I see you eye-ing cherry-pick), and we will see more of them later, but for now let's focus on this technique."
+              "クリアのための方法はいくつもありますが（cherry-pickを使うこともできます）、別の回答はまた後程の章で見ることにんして、今回は上記の方法でやってみることにしましょう。"
             ]
           }
         },
@@ -33401,7 +33401,7 @@ require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "Lastly, pay attention to the goal state here -- since we move the commits twice, they both get an apostrophe appended. One more apostrophe is added for the commit we amend, which gives us the final form of the tree "
+              "最後に、ゴール時点での状態に気を付けてください。今回2回ほどコミットを動かしますから、コミットへのポインタにはアポストロフィ（'）が追加されます。commit --amendコマンドの実行でできたコミットには更にもう1つのアポストロフィが追加されます。 "
             ]
           }
         }
@@ -33501,11 +33501,11 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
   "compareOnlyMaster": true,
   "name": {
     "ko": "커밋 갖고 놀기 #2",
-    "en_US": "Juggling Commits #2",
+    "en_US": "コミットをやりくりする その2",
     "zh_CN": "提交交换戏法 #2"
   },
   "hint": {
-    "en_US": "Don't forget to forward master to the updated changes!",
+    "en_US": "masterのポインタを先に進めることを忘れずに！",
     "ko": "master를 변경 완료한 커밋으로 이동(forward)시키는 것을 잊지 마세요!",
     "zh_CN": "别忘记了将 master 快进到最新的更新上！"
   },
@@ -33516,13 +33516,13 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Juggling Commits #2",
+              "## Commitsをやりくりする #2",
               "",
-              "*If you haven't completed Juggling Commits #1 (the previous level), please do so before continuing*",
+              "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
               "",
-              "As you saw in the last level, we used `rebase -i` to reorder the commits. Once the commit we wanted to change was on top, we could easily --amend it and re-order back to our preferred order.",
+              "前回見てきたように、コミット順序の変更のために、私たちは`rebase -i`コマンドを利用しました。ツリーの先頭に変更対象のコミットがあれば、--amendオプションを使うことで容易に変更を書きかえて、元の順序に戻すことができます。",
               "",
-              "The only issue here is that there is a lot of reordering going on, which can introduce rebase conflicts. Let's look at another method with `git cherry-pick`"
+              "この場合に心配なことが一つだけあって、それは複数回の順序の変更が行われるので、rebaseのコンフリクト（衝突）が起こりうることです。こういうケースへの対策として、`git cherry-pick`を使った別の解決法について考えてみましょう。"
             ]
           }
         },
@@ -33530,12 +33530,12 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "Remember that git cherry-pick will plop down a commit from anywhere in the tree onto HEAD (as long as that commit isn't upstream).",
+              "git cherry-pickを使うと、ツリーの中から複数のコミットを選んで、HEADの下に新しく作ることができましたね。",
               "",
-              "Here's a small refresher demo:"
+              "簡単なデモを見てみましょう："
             ],
             "afterMarkdowns": [
-              "Nice! Let's move on"
+              "できました！次へ進みましょう"
             ],
             "command": "git cherry-pick C2",
             "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
@@ -33545,7 +33545,7 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "So in this level, let's accomplish the same objective of amending `C2` once but avoid using `rebase -i`. I'll leave it up to you to figure it out! :D"
+              "このレベルでは、`C2`をamendすることで前回と同じ目的を達成しましょう。但し`rebase -i`は使わずにクリアしてください。どんな方法で進めるかはあなたにおまかせします！:D"
             ]
           }
         }
@@ -33927,7 +33927,7 @@ require.define("/src/levels/rebase/1.js",function(require,module,exports,__dirna
     "zh_CN": "衍合一百遍啊一百遍"
   },
   "hint": {
-    "en_US": "Remember, the most efficient way might be to only update master at the end...",
+    "en_US": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
     "ko": "아마도 master를 마지막에 업데이트하는 것이 가장 효율적인 방법일 것입니다...",
     "zh_CN": "记住，可能最终最高效的方法就是更新主分支（master）……"
   },
@@ -33938,13 +33938,13 @@ require.define("/src/levels/rebase/1.js",function(require,module,exports,__dirna
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "### Rebasing Multiple Branches",
+              "### 複数のブランチをリベースする",
               "",
-              "Man, we have a lot of branches going on here! Let's rebase all the work from these branches onto master.",
+              "さあ、いくつものブランチが出てきます。このブランチたち全てをmasterブランチにリベースしましょう。",
               "",
-              "Upper management is making this a bit trickier though -- they want the commits to all be in sequential order. So this means that our final tree should have `C7'` at the bottom, `C6'` above that, etc etc, etc all in order.",
+              "おエライさん方が今回の仕事を少しトリッキーにしてくれました ― コミットはすべて一列のシーケンシャルな状態にしてほしいそうです。つまり私たちが作るリポジトリの最終的なツリーの状態は、`C7'`が最後に来て、`C6'`がその一つ上に来て、、と順に積み重なるイメージです。",
               "",
-              "If you mess up along the way, feel free to use `reset` to start over again. Be sure to check out our solution and see if you can do it in fewer commands!"
+              "試行錯誤してツリーが汚くなってきたら、`reset`コマンドを使ってツリーの状態を初期化してください。模範解答をチェックして、それよりも簡単なコマンドで済ませられるかどうか、を考えるのも忘れずに！"
             ]
           }
         }
@@ -34001,11 +34001,11 @@ require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirna
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C5\",\"id\":\"master\"},\"one\":{\"target\":\"C1\",\"id\":\"one\"},\"two\":{\"target\":\"C1\",\"id\":\"two\"},\"three\":{\"target\":\"C1\",\"id\":\"three\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C4\"],\"id\":\"C5\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
     "ko": "브랜치 스파게티",
-    "en_US": "Branch Spaghetti",
+    "en_US": "ブランチスパゲッティ",
     "zh_CN": "分支浆糊"
   },
   "hint": {
-    "en_US": "Make sure to do everything in the proper order! Branch one first, then two, then three",
+    "en_US": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
     "ko": "이 문제를 해결하는 방법은 여러가지가 있습니다! 체리픽(cherry-pick)이 가장 쉽지만 오래걸리는 방법이고, 리베이스(rebase -i)가 빠른 방법입니다",
     "zh_CN": "确保你是按照正确的顺序来操作！先操作分支 `one`, 然后 `two`, 最后才是 `three`"
   },
@@ -34016,15 +34016,15 @@ require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirna
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Branch Spaghetti",
+              "## ブランチスパゲッティ",
               "",
-              "WOAHHHhhh Nelly! We have quite the goal to reach in this level.",
+              "なんということでしょう。今回のレベルクリアのために、やることがたくさんあります。",
               "",
-              "Here we have `master` that is a few commits ahead of branches `one` `two` and `three`. For whatever reason, we need to update these three other branches with modified versions of the last few commits on master.",
+              "いま`master`が指しているコミットの数個前のコミットに、ブランチ`one`、`two`それから`three`があります。何か事情があって、これらの3つのブランチをmasterが指している最新の状態に更新したいケースを考えます。",
               "",
-              "Branch `one` needs a re-ordering and a deletion of `C5`. `two` needs pure reordering, and `three` only needs one commit!",
+              "ブランチ`one`に対しては、順序の変更と`C5`の削除が必要です。`two`では順序の変更のみ、`three`に対しては1回だけコミットすればOKです。",
               "",
-              "We will let you figure out how to solve this one -- make sure to check out our solution afterwards with `show solution`. "
+              "`show solution`コマンドで模範解答を確認できますから、こちらも利用してください。 "
             ]
           }
         }
@@ -34036,7 +34036,7 @@ require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirna
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Branch Spaghetti",
+              "## ブランチスパゲッティ",
               "",
               "哇塞大神！这关我们要来点不同的！",
               "",

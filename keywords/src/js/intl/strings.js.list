@@ -6,3 +6,6 @@ Would you like to move onto *"{nextLevel}"*, the next level?
 
 Awesome! You matched or exceeded our solution.
 素晴らしい！このレベルをクリアしましたね。
+
+See if you can whittle it down to {best} :D
+模範解答の回数={best}回でクリアする方法も考えてみましょう :D
