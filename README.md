@@ -3,16 +3,15 @@
 
 ## 概要
 * 日本語化完了版⇒ [http://remore.github.com/learnGitBranching-ja](http://remore.github.com/learnGitBranching-ja)
-* 原作はPeter M Cottle。Git学習ツール。
+* 原作はPeter M Cottle
+
+## いいところ
 * グラフィカルにgitの基本的な操作を学習できて便利
+* 入門レベルの内容。Subversionからの乗り換えの時とか、デザイナさんの勉強とかにも使える
 
-## 翻訳した経緯とか今後の予定とか
-* [HackerNewsで見て](http://news.ycombinator.com/item?id=5232415)知ったので、翻訳を申し出たらOKが出た
-* Peterいわく、近いうちに[本家リポジトリ](https://github.com/pcottle/learnGitBranching)に取り込んでもらえるらしい
-* 翻訳リソースのライセンスは本家リポジトリに倣ってMIT Licenseで運用
-
-## 画面イメージはこんな感じ
-まだgitを本格的に使ってない人が練習するのに使ったりするといろいろ捗りそう。デザイナさんの勉強とかにもいいかも。
+## その他
+* 1か月くらい前に[HackerNews](http://news.ycombinator.com/item?id=5232415)かTLか何かで知って、会社の人やgitを知らない人にもオススメできそうだったので翻訳した
+* Peterいわく、この日本語版を近いうちに[本家リポジトリ](https://github.com/pcottle/learnGitBranching)に取り込んでもらえるらしい
 
 <img src="https://raw.github.com/pcottle/learnGitBranching/master/assets/learnGitBranching.png"/>
 
