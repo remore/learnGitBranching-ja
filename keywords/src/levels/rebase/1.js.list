@@ -1,0 +1,15 @@
+Remember, the most efficient way might be to only update master at the end...
+最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・
+
+### Rebasing Multiple Branches
+### 複数のブランチをリベースする
+
+Man, we have a lot of branches going on here! Let's rebase all the work from these branches onto master.
+さあ、いくつものブランチが出てきます。このブランチたち全てをmasterブランチにリベースしましょう。
+
+Upper management is making this a bit trickier though -- they want the commits to all be in sequential order. So this means that our final tree should have `C7'` at the bottom, `C6'` above that, etc etc, etc all in order.
+おエライさん方が今回の仕事を少しトリッキーにしてくれました ― コミットはすべて一列のシーケンシャルな状態にしてほしいそうです。つまり私たちが作るリポジトリの最終的なツリーの状態は、`C7'`が最後に来て、`C6'`がその一つ上に来て、、と順に積み重なるイメージです。
+
+If you mess up along the way, feel free to use `reset` to start over again. Be sure to check out our solution and see if you can do it in fewer commands!
+試行錯誤してツリーが汚くなってきたら、`reset`コマンドを使ってツリーの状態を初期化してください。模範解答をチェックして、それよりも簡単なコマンドで済ませられるかどうか、を考えるのも忘れずに！
+

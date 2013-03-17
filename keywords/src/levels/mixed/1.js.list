@@ -1,0 +1,29 @@
+Grabbing Just 1 Commit
+Grabbing Just 1 Commit
+
+Remember, interactive rebase or cherry-pick is your friend here
+このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです
+
+## Locally stacked commits
+## ローカルに積み上がったコミット
+
+Here's a development situation that often happens: I'm trying to track down a bug but it is quite elusive. In order to aid in my detective work, I put in a few debug commands and a few print statements.
+実際の開発ではこういうケースがよくあります：「バグの原因調査を試みているがバグの再現性がかなり低い。調査の補助のために、いくつかのデバッグ用の命令やprint文を差し込んでいる。」
+
+All of these debugging / print statements are in their own branches. Finally I track down the bug, fix it, and rejoice!
+これらのデバッグ用のコードはバグ修正用のブランチにコミットされています。そしてついにバグの原因を突き止めて、修正した！やった！
+
+Only problem is that I now need to get my `bugFix` back into the `master` branch! I could simply fast-forward `master`, but then `master` would get all my debug statements.
+あとは`bugFix`ブランチを`master`ブランチに統合できればOK。そこで単純に`master`をfast-forwardすればよいかというと、それでは`master`ブランチの中にデバッグ用のコードも混入してしまいます。
+
+This is where the magic of Git comes in. There are a few ways to do this, but the two most straightforward ways are:
+ここでGitの魔法が力を発揮します。解決のためにはいくつかの方法がありますが、最も素直な解決方法は2つあって：
+
+Interactive (the `-i`) rebasing allows you to choose which commits you want to keep or discard. It also allows you to reorder commits. This can be helpful if you want to toss out some work.
+インタラクティブモードの（`-i`オプションつきの）rebaseによって、保持したいコミットと破棄したいコミットを選り分けることができます。コミットの順序を変更することも可能です。この方法は、一部の変更をどこかへやってしまいたい時に便利です。
+
+Cherry-picking allows you to pick individual commits and plop them down on top of `HEAD`
+もう一方のcherry-pickを使うと、持っていきたいコミットを選んで`HEAD`の先にストンと落とすことができます。
+
+This is a later level so we will leave it up to you to decide, but in order to complete the level, make sure `master` receives the commit that `bugFix` references.
+後半の章ですのでどう解決するかをもう自分で考えることができると思います。このレベルをクリアするためには、`bugFix`が持っているコミットを`master`ブランチが受け取る必要がある点には注意してください。
