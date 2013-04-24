@@ -395,9 +395,9 @@ process.binding = function (name) {
 require.define("/node_modules/underscore/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"underscore.js"}
 });
 
-require.define("/node_modules/underscore/underscore.js",function(require,module,exports,__dirname,__filename,process,global){//     Underscore.js 1.4.3
+require.define("/node_modules/underscore/underscore.js",function(require,module,exports,__dirname,__filename,process,global){//     Underscore.js 1.4.4
 //     http://underscorejs.org
-//     (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
+//     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
 //     Underscore may be freely distributed under the MIT license.
 
 (function() {
@@ -461,7 +461,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   }
 
   // Current version.
-  _.VERSION = '1.4.3';
+  _.VERSION = '1.4.4';
 
   // Collection Functions
   // --------------------
@@ -621,8 +621,9 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   // Invoke a method (with arguments) on every item in a collection.
   _.invoke = function(obj, method) {
     var args = slice.call(arguments, 2);
+    var isFunc = _.isFunction(method);
     return _.map(obj, function(value) {
-      return (_.isFunction(method) ? method : value[method]).apply(value, args);
+      return (isFunc ? method : value[method]).apply(value, args);
     });
   };
 
@@ -632,15 +633,21 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   };
 
   // Convenience version of a common use case of `filter`: selecting only objects
-  // with specific `key:value` pairs.
-  _.where = function(obj, attrs) {
-    if (_.isEmpty(attrs)) return [];
-    return _.filter(obj, function(value) {
+  // containing specific `key:value` pairs.
+  _.where = function(obj, attrs, first) {
+    if (_.isEmpty(attrs)) return first ? null : [];
+    return _[first ? 'find' : 'filter'](obj, function(value) {
       for (var key in attrs) {
         if (attrs[key] !== value[key]) return false;
       }
       return true;
     });
+  };
+
+  // Convenience version of a common use case of `find`: getting the first object
+  // containing specific `key:value` pairs.
+  _.findWhere = function(obj, attrs) {
+    return _.where(obj, attrs, true);
   };
 
   // Return the maximum element or (element-based computation).
@@ -964,26 +971,23 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   // Function (ahem) Functions
   // ------------------
 
-  // Reusable constructor function for prototype setting.
-  var ctor = function(){};
-
   // Create a function bound to a given object (assigning `this`, and arguments,
-  // optionally). Binding with arguments is also known as `curry`.
-  // Delegates to **ECMAScript 5**'s native `Function.bind` if available.
-  // We check for `func.bind` first, to fail fast when `func` is undefined.
+  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
+  // available.
   _.bind = function(func, context) {
-    var args, bound;
     if (func.bind === nativeBind && nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
-    if (!_.isFunction(func)) throw new TypeError;
-    args = slice.call(arguments, 2);
-    return bound = function() {
-      if (!(this instanceof bound)) return func.apply(context, args.concat(slice.call(arguments)));
-      ctor.prototype = func.prototype;
-      var self = new ctor;
-      ctor.prototype = null;
-      var result = func.apply(self, args.concat(slice.call(arguments)));
-      if (Object(result) === result) return result;
-      return self;
+    var args = slice.call(arguments, 2);
+    return function() {
+      return func.apply(context, args.concat(slice.call(arguments)));
+    };
+  };
+
+  // Partially apply a function by creating a version that has had some of its
+  // arguments pre-filled, without changing its dynamic `this` context.
+  _.partial = function(func) {
+    var args = slice.call(arguments, 1);
+    return function() {
+      return func.apply(this, args.concat(slice.call(arguments)));
     };
   };
 
@@ -991,7 +995,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   // all callbacks defined on an object belong to it.
   _.bindAll = function(obj) {
     var funcs = slice.call(arguments, 1);
-    if (funcs.length == 0) funcs = _.functions(obj);
+    if (funcs.length === 0) funcs = _.functions(obj);
     each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });
     return obj;
   };
@@ -1416,7 +1420,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
       max = min;
       min = 0;
     }
-    return min + (0 | Math.random() * (max - min + 1));
+    return min + Math.floor(Math.random() * (max - min + 1));
   };
 
   // List of HTML entities for escaping.
@@ -1472,7 +1476,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   // Useful for temporary DOM ids.
   var idCounter = 0;
   _.uniqueId = function(prefix) {
-    var id = '' + ++idCounter;
+    var id = ++idCounter + '';
     return prefix ? prefix + id : id;
   };
 
@@ -1507,6 +1511,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
   // Underscore templating handles arbitrary delimiters, preserves whitespace,
   // and correctly escapes quotes within interpolated code.
   _.template = function(text, data, settings) {
+    var render;
     settings = _.defaults({}, settings, _.templateSettings);
 
     // Combine delimiters into one regular expression via alternation.
@@ -1545,7 +1550,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
       source + "return __p;\n";
 
     try {
-      var render = new Function(settings.variable || 'obj', '_', source);
+      render = new Function(settings.variable || 'obj', '_', source);
     } catch (e) {
       e.source = source;
       throw e;
@@ -1622,7 +1627,7 @@ require.define("/node_modules/underscore/underscore.js",function(require,module,
 require.define("/node_modules/backbone/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"backbone.js"}
 });
 
-require.define("/node_modules/backbone/backbone.js",function(require,module,exports,__dirname,__filename,process,global){//     Backbone.js 0.9.9
+require.define("/node_modules/backbone/backbone.js",function(require,module,exports,__dirname,__filename,process,global){//     Backbone.js 0.9.10
 
 //     (c) 2010-2012 Jeremy Ashkenas, DocumentCloud Inc.
 //     Backbone may be freely distributed under the MIT license.
@@ -1658,7 +1663,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
   }
 
   // Current version of the library. Keep in sync with `package.json`.
-  Backbone.VERSION = '0.9.9';
+  Backbone.VERSION = '0.9.10';
 
   // Require Underscore, if we're on the server, and it's not already present.
   var _ = root._;
@@ -1712,7 +1717,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
 
   // Optimized internal dispatch function for triggering events. Tries to
   // keep the usual cases speedy (most Backbone events have 3 arguments).
-  var triggerEvents = function(obj, events, args) {
+  var triggerEvents = function(events, args) {
     var ev, i = -1, l = events.length;
     switch (args.length) {
     case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx);
@@ -1766,7 +1771,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
 
     // Remove one or many callbacks. If `context` is null, removes all
     // callbacks with that function. If `callback` is null, removes all
-    // callbacks for the event. If `events` is null, removes all bound
+    // callbacks for the event. If `name` is null, removes all bound
     // callbacks for all events.
     off: function(name, callback, context) {
       var list, ev, events, names, i, l, j, k;
@@ -1784,7 +1789,8 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
           if (callback || context) {
             for (j = 0, k = list.length; j < k; j++) {
               ev = list[j];
-              if ((callback && callback !== (ev.callback._callback || ev.callback)) ||
+              if ((callback && callback !== ev.callback &&
+                               callback !== ev.callback._callback) ||
                   (context && context !== ev.context)) {
                 events.push(ev);
               }
@@ -1807,32 +1813,33 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       if (!eventsApi(this, 'trigger', name, args)) return this;
       var events = this._events[name];
       var allEvents = this._events.all;
-      if (events) triggerEvents(this, events, args);
-      if (allEvents) triggerEvents(this, allEvents, arguments);
+      if (events) triggerEvents(events, args);
+      if (allEvents) triggerEvents(allEvents, arguments);
       return this;
     },
 
     // An inversion-of-control version of `on`. Tell *this* object to listen to
     // an event in another object ... keeping track of what it's listening to.
-    listenTo: function(object, events, callback) {
+    listenTo: function(obj, name, callback) {
       var listeners = this._listeners || (this._listeners = {});
-      var id = object._listenerId || (object._listenerId = _.uniqueId('l'));
-      listeners[id] = object;
-      object.on(events, callback || this, this);
+      var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));
+      listeners[id] = obj;
+      obj.on(name, typeof name === 'object' ? this : callback, this);
       return this;
     },
 
     // Tell this object to stop listening to either specific events ... or
     // to every object it's currently listening to.
-    stopListening: function(object, events, callback) {
+    stopListening: function(obj, name, callback) {
       var listeners = this._listeners;
       if (!listeners) return;
-      if (object) {
-        object.off(events, callback, this);
-        if (!events && !callback) delete listeners[object._listenerId];
+      if (obj) {
+        obj.off(name, typeof name === 'object' ? this : callback, this);
+        if (!name && !callback) delete listeners[obj._listenerId];
       } else {
+        if (typeof name === 'object') callback = this;
         for (var id in listeners) {
-          listeners[id].off(null, null, this);
+          listeners[id].off(name, callback, this);
         }
         this._listeners = {};
       }
@@ -1857,15 +1864,14 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     var defaults;
     var attrs = attributes || {};
     this.cid = _.uniqueId('c');
-    this.changed = {};
     this.attributes = {};
-    this._changes = [];
     if (options && options.collection) this.collection = options.collection;
-    if (options && options.parse) attrs = this.parse(attrs);
-    if (defaults = _.result(this, 'defaults')) _.defaults(attrs, defaults);
-    this.set(attrs, {silent: true});
-    this._currentAttributes = _.clone(this.attributes);
-    this._previousAttributes = _.clone(this.attributes);
+    if (options && options.parse) attrs = this.parse(attrs, options) || {};
+    if (defaults = _.result(this, 'defaults')) {
+      attrs = _.defaults({}, attrs, defaults);
+    }
+    this.set(attrs, options);
+    this.changed = {};
     this.initialize.apply(this, arguments);
   };
 
@@ -1909,47 +1915,72 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return this.get(attr) != null;
     },
 
+    // ----------------------------------------------------------------------
+
     // Set a hash of model attributes on the object, firing `"change"` unless
     // you choose to silence it.
     set: function(key, val, options) {
-      var attr, attrs;
+      var attr, attrs, unset, changes, silent, changing, prev, current;
       if (key == null) return this;
 
       // Handle both `"key", value` and `{key: value}` -style arguments.
-      if (_.isObject(key)) {
+      if (typeof key === 'object') {
         attrs = key;
         options = val;
       } else {
         (attrs = {})[key] = val;
       }
 
-      // Extract attributes and options.
-      var silent = options && options.silent;
-      var unset = options && options.unset;
+      options || (options = {});
 
       // Run validation.
       if (!this._validate(attrs, options)) return false;
 
+      // Extract attributes and options.
+      unset           = options.unset;
+      silent          = options.silent;
+      changes         = [];
+      changing        = this._changing;
+      this._changing  = true;
+
+      if (!changing) {
+        this._previousAttributes = _.clone(this.attributes);
+        this.changed = {};
+      }
+      current = this.attributes, prev = this._previousAttributes;
+
       // Check for changes of `id`.
       if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
 
-      var now = this.attributes;
-
-      // For each `set` attribute...
+      // For each `set` attribute, update or delete the current value.
       for (attr in attrs) {
         val = attrs[attr];
-
-        // Update or delete the current value, and track the change.
-        unset ? delete now[attr] : now[attr] = val;
-        this._changes.push(attr, val);
+        if (!_.isEqual(current[attr], val)) changes.push(attr);
+        if (!_.isEqual(prev[attr], val)) {
+          this.changed[attr] = val;
+        } else {
+          delete this.changed[attr];
+        }
+        unset ? delete current[attr] : current[attr] = val;
       }
 
-      // Signal that the model's state has potentially changed, and we need
-      // to recompute the actual changes.
-      this._hasComputed = false;
+      // Trigger all relevant attribute changes.
+      if (!silent) {
+        if (changes.length) this._pending = true;
+        for (var i = 0, l = changes.length; i < l; i++) {
+          this.trigger('change:' + changes[i], this, current[changes[i]], options);
+        }
+      }
 
-      // Fire the `"change"` events.
-      if (!silent) this.change(options);
+      if (changing) return this;
+      if (!silent) {
+        while (this._pending) {
+          this._pending = false;
+          this.trigger('change', this, options);
+        }
+      }
+      this._pending = false;
+      this._changing = false;
       return this;
     },
 
@@ -1967,16 +1998,54 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return this.set(attrs, _.extend({}, options, {unset: true}));
     },
 
+    // Determine if the model has changed since the last `"change"` event.
+    // If you specify an attribute name, determine if that attribute has changed.
+    hasChanged: function(attr) {
+      if (attr == null) return !_.isEmpty(this.changed);
+      return _.has(this.changed, attr);
+    },
+
+    // Return an object containing all the attributes that have changed, or
+    // false if there are no changed attributes. Useful for determining what
+    // parts of a view need to be updated and/or what attributes need to be
+    // persisted to the server. Unset attributes will be set to undefined.
+    // You can also pass an attributes object to diff against the model,
+    // determining if there *would be* a change.
+    changedAttributes: function(diff) {
+      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+      var val, changed = false;
+      var old = this._changing ? this._previousAttributes : this.attributes;
+      for (var attr in diff) {
+        if (_.isEqual(old[attr], (val = diff[attr]))) continue;
+        (changed || (changed = {}))[attr] = val;
+      }
+      return changed;
+    },
+
+    // Get the previous value of an attribute, recorded at the time the last
+    // `"change"` event was fired.
+    previous: function(attr) {
+      if (attr == null || !this._previousAttributes) return null;
+      return this._previousAttributes[attr];
+    },
+
+    // Get all of the attributes of the model at the time of the previous
+    // `"change"` event.
+    previousAttributes: function() {
+      return _.clone(this._previousAttributes);
+    },
+
+    // ---------------------------------------------------------------------
+
     // Fetch the model from the server. If the server's representation of the
     // model differs from its current attributes, they will be overriden,
     // triggering a `"change"` event.
     fetch: function(options) {
       options = options ? _.clone(options) : {};
       if (options.parse === void 0) options.parse = true;
-      var model = this;
       var success = options.success;
-      options.success = function(resp, status, xhr) {
-        if (!model.set(model.parse(resp), options)) return false;
+      options.success = function(model, resp, options) {
+        if (!model.set(model.parse(resp, options), options)) return false;
         if (success) success(model, resp, options);
       };
       return this.sync('read', this, options);
@@ -1986,55 +2055,51 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
     save: function(key, val, options) {
-      var attrs, current, done;
+      var attrs, success, method, xhr, attributes = this.attributes;
 
       // Handle both `"key", value` and `{key: value}` -style arguments.
-      if (key == null || _.isObject(key)) {
+      if (key == null || typeof key === 'object') {
         attrs = key;
         options = val;
-      } else if (key != null) {
+      } else {
         (attrs = {})[key] = val;
       }
-      options = options ? _.clone(options) : {};
 
-      // If we're "wait"-ing to set changed attributes, validate early.
-      if (options.wait) {
-        if (attrs && !this._validate(attrs, options)) return false;
-        current = _.clone(this.attributes);
-      }
+      // If we're not waiting and attributes exist, save acts as `set(attr).save(null, opts)`.
+      if (attrs && (!options || !options.wait) && !this.set(attrs, options)) return false;
 
-      // Regular saves `set` attributes before persisting to the server.
-      var silentOptions = _.extend({}, options, {silent: true});
-      if (attrs && !this.set(attrs, options.wait ? silentOptions : options)) {
-        return false;
-      }
+      options = _.extend({validate: true}, options);
 
       // Do not persist invalid models.
-      if (!attrs && !this._validate(null, options)) return false;
+      if (!this._validate(attrs, options)) return false;
+
+      // Set temporary attributes if `{wait: true}`.
+      if (attrs && options.wait) {
+        this.attributes = _.extend({}, attributes, attrs);
+      }
 
       // After a successful server-side save, the client is (optionally)
       // updated with the server-side state.
-      var model = this;
-      var success = options.success;
-      options.success = function(resp, status, xhr) {
-        done = true;
-        var serverAttrs = model.parse(resp);
+      if (options.parse === void 0) options.parse = true;
+      success = options.success;
+      options.success = function(model, resp, options) {
+        // Ensure attributes are restored during synchronous saves.
+        model.attributes = attributes;
+        var serverAttrs = model.parse(resp, options);
         if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);
-        if (!model.set(serverAttrs, options)) return false;
+        if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
+          return false;
+        }
         if (success) success(model, resp, options);
       };
 
       // Finish configuring and sending the Ajax request.
-      var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
-      if (method == 'patch') options.attrs = attrs;
-      var xhr = this.sync(method, this, options);
+      method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
+      if (method === 'patch') options.attrs = attrs;
+      xhr = this.sync(method, this, options);
 
-      // When using `wait`, reset attributes to original values unless
-      // `success` has been called already.
-      if (!done && options.wait) {
-        this.clear(silentOptions);
-        this.set(current, silentOptions);
-      }
+      // Restore attributes.
+      if (attrs && options.wait) this.attributes = attributes;
 
       return xhr;
     },
@@ -2051,13 +2116,13 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         model.trigger('destroy', model, model.collection, options);
       };
 
-      options.success = function(resp) {
+      options.success = function(model, resp, options) {
         if (options.wait || model.isNew()) destroy();
         if (success) success(model, resp, options);
       };
 
       if (this.isNew()) {
-        options.success();
+        options.success(this, null, options);
         return false;
       }
 
@@ -2077,7 +2142,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
 
     // **parse** converts a response into the hash of attributes to be `set` on
     // the model. The default implementation is just to pass the response along.
-    parse: function(resp) {
+    parse: function(resp, options) {
       return resp;
     },
 
@@ -2091,115 +2156,20 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return this.id == null;
     },
 
-    // Call this method to manually fire a `"change"` event for this model and
-    // a `"change:attribute"` event for each changed attribute.
-    // Calling this will cause all objects observing the model to update.
-    change: function(options) {
-      var changing = this._changing;
-      this._changing = true;
-
-      // Generate the changes to be triggered on the model.
-      var triggers = this._computeChanges(true);
-
-      this._pending = !!triggers.length;
-
-      for (var i = triggers.length - 2; i >= 0; i -= 2) {
-        this.trigger('change:' + triggers[i], this, triggers[i + 1], options);
-      }
-
-      if (changing) return this;
-
-      // Trigger a `change` while there have been changes.
-      while (this._pending) {
-        this._pending = false;
-        this.trigger('change', this, options);
-        this._previousAttributes = _.clone(this.attributes);
-      }
-
-      this._changing = false;
-      return this;
-    },
-
-    // Determine if the model has changed since the last `"change"` event.
-    // If you specify an attribute name, determine if that attribute has changed.
-    hasChanged: function(attr) {
-      if (!this._hasComputed) this._computeChanges();
-      if (attr == null) return !_.isEmpty(this.changed);
-      return _.has(this.changed, attr);
-    },
-
-    // Return an object containing all the attributes that have changed, or
-    // false if there are no changed attributes. Useful for determining what
-    // parts of a view need to be updated and/or what attributes need to be
-    // persisted to the server. Unset attributes will be set to undefined.
-    // You can also pass an attributes object to diff against the model,
-    // determining if there *would be* a change.
-    changedAttributes: function(diff) {
-      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
-      var val, changed = false, old = this._previousAttributes;
-      for (var attr in diff) {
-        if (_.isEqual(old[attr], (val = diff[attr]))) continue;
-        (changed || (changed = {}))[attr] = val;
-      }
-      return changed;
-    },
-
-    // Looking at the built up list of `set` attribute changes, compute how
-    // many of the attributes have actually changed. If `loud`, return a
-    // boiled-down list of only the real changes.
-    _computeChanges: function(loud) {
-      this.changed = {};
-      var already = {};
-      var triggers = [];
-      var current = this._currentAttributes;
-      var changes = this._changes;
-
-      // Loop through the current queue of potential model changes.
-      for (var i = changes.length - 2; i >= 0; i -= 2) {
-        var key = changes[i], val = changes[i + 1];
-        if (already[key]) continue;
-        already[key] = true;
-
-        // Check if the attribute has been modified since the last change,
-        // and update `this.changed` accordingly. If we're inside of a `change`
-        // call, also add a trigger to the list.
-        if (current[key] !== val) {
-          this.changed[key] = val;
-          if (!loud) continue;
-          triggers.push(key, val);
-          current[key] = val;
-        }
-      }
-      if (loud) this._changes = [];
-
-      // Signals `this.changed` is current to prevent duplicate calls from `this.hasChanged`.
-      this._hasComputed = true;
-      return triggers;
-    },
-
-    // Get the previous value of an attribute, recorded at the time the last
-    // `"change"` event was fired.
-    previous: function(attr) {
-      if (attr == null || !this._previousAttributes) return null;
-      return this._previousAttributes[attr];
-    },
-
-    // Get all of the attributes of the model at the time of the previous
-    // `"change"` event.
-    previousAttributes: function() {
-      return _.clone(this._previousAttributes);
+    // Check if the model is currently in a valid state.
+    isValid: function(options) {
+      return !this.validate || !this.validate(this.attributes, options);
     },
 
     // Run validation against the next complete set of model attributes,
-    // returning `true` if all is well. If a specific `error` callback has
-    // been passed, call that instead of firing the general `"error"` event.
+    // returning `true` if all is well. Otherwise, fire a general
+    // `"error"` event and call the error callback, if specified.
     _validate: function(attrs, options) {
-      if (!this.validate) return true;
+      if (!options.validate || !this.validate) return true;
       attrs = _.extend({}, this.attributes, attrs);
-      var error = this.validate(attrs, options);
+      var error = this.validationError = this.validate(attrs, options) || null;
       if (!error) return true;
-      if (options && options.error) options.error(this, error, options);
-      this.trigger('error', this, error, options);
+      this.trigger('invalid', this, error, options || {});
       return false;
     }
 
@@ -2215,6 +2185,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     options || (options = {});
     if (options.model) this.model = options.model;
     if (options.comparator !== void 0) this.comparator = options.comparator;
+    this.models = [];
     this._reset();
     this.initialize.apply(this, arguments);
     if (models) this.reset(models, _.extend({silent: true}, options));
@@ -2242,74 +2213,81 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return Backbone.sync.apply(this, arguments);
     },
 
-    // Add a model, or list of models to the set. Pass **silent** to avoid
-    // firing the `add` event for every new model.
+    // Add a model, or list of models to the set.
     add: function(models, options) {
-      var i, args, length, model, existing, needsSort;
-      var at = options && options.at;
-      var sort = ((options && options.sort) == null ? true : options.sort);
       models = _.isArray(models) ? models.slice() : [models];
+      options || (options = {});
+      var i, l, model, attrs, existing, doSort, add, at, sort, sortAttr;
+      add = [];
+      at = options.at;
+      sort = this.comparator && (at == null) && options.sort != false;
+      sortAttr = _.isString(this.comparator) ? this.comparator : null;
 
       // Turn bare objects into model references, and prevent invalid models
       // from being added.
-      for (i = models.length - 1; i >= 0; i--) {
-        if(!(model = this._prepareModel(models[i], options))) {
-          this.trigger("error", this, models[i], options);
-          models.splice(i, 1);
+      for (i = 0, l = models.length; i < l; i++) {
+        if (!(model = this._prepareModel(attrs = models[i], options))) {
+          this.trigger('invalid', this, attrs, options);
           continue;
         }
-        models[i] = model;
 
-        existing = model.id != null && this._byId[model.id];
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing || this._byCid[model.cid]) {
-          if (options && options.merge && existing) {
-            existing.set(model.attributes, options);
-            needsSort = sort;
+        if (existing = this.get(model)) {
+          if (options.merge) {
+            existing.set(attrs === model ? model.attributes : attrs, options);
+            if (sort && !doSort && existing.hasChanged(sortAttr)) doSort = true;
           }
-          models.splice(i, 1);
           continue;
         }
+
+        // This is a new model, push it to the `add` list.
+        add.push(model);
 
         // Listen to added models' events, and index models for lookup by
         // `id` and by `cid`.
         model.on('all', this._onModelEvent, this);
-        this._byCid[model.cid] = model;
+        this._byId[model.cid] = model;
         if (model.id != null) this._byId[model.id] = model;
       }
 
       // See if sorting is needed, update `length` and splice in new models.
-      if (models.length) needsSort = sort;
-      this.length += models.length;
-      args = [at != null ? at : this.models.length, 0];
-      push.apply(args, models);
-      splice.apply(this.models, args);
+      if (add.length) {
+        if (sort) doSort = true;
+        this.length += add.length;
+        if (at != null) {
+          splice.apply(this.models, [at, 0].concat(add));
+        } else {
+          push.apply(this.models, add);
+        }
+      }
 
-      // Sort the collection if appropriate.
-      if (needsSort && this.comparator && at == null) this.sort({silent: true});
+      // Silently sort the collection if appropriate.
+      if (doSort) this.sort({silent: true});
 
-      if (options && options.silent) return this;
+      if (options.silent) return this;
 
       // Trigger `add` events.
-      while (model = models.shift()) {
-        model.trigger('add', model, this, options);
+      for (i = 0, l = add.length; i < l; i++) {
+        (model = add[i]).trigger('add', model, this, options);
       }
+
+      // Trigger `sort` if the collection was sorted.
+      if (doSort) this.trigger('sort', this, options);
 
       return this;
     },
 
-    // Remove a model, or a list of models from the set. Pass silent to avoid
-    // firing the `remove` event for every model removed.
+    // Remove a model, or a list of models from the set.
     remove: function(models, options) {
-      var i, l, index, model;
-      options || (options = {});
       models = _.isArray(models) ? models.slice() : [models];
+      options || (options = {});
+      var i, l, index, model;
       for (i = 0, l = models.length; i < l; i++) {
         model = this.get(models[i]);
         if (!model) continue;
         delete this._byId[model.id];
-        delete this._byCid[model.cid];
+        delete this._byId[model.cid];
         index = this.indexOf(model);
         this.models.splice(index, 1);
         this.length--;
@@ -2358,7 +2336,8 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // Get a model from the set by id.
     get: function(obj) {
       if (obj == null) return void 0;
-      return this._byId[obj.id != null ? obj.id : obj] || this._byCid[obj.cid || obj];
+      this._idAttr || (this._idAttr = this.model.prototype.idAttribute);
+      return this._byId[obj.id || obj.cid || obj[this._idAttr] || obj];
     },
 
     // Get the model at the given index.
@@ -2384,14 +2363,16 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       if (!this.comparator) {
         throw new Error('Cannot sort a set without a comparator');
       }
+      options || (options = {});
 
+      // Run sort based on type of `comparator`.
       if (_.isString(this.comparator) || this.comparator.length === 1) {
         this.models = this.sortBy(this.comparator, this);
       } else {
         this.models.sort(_.bind(this.comparator, this));
       }
 
-      if (!options || !options.silent) this.trigger('sort', this, options);
+      if (!options.silent) this.trigger('sort', this, options);
       return this;
     },
 
@@ -2403,11 +2384,10 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // Smartly update a collection with a change set of models, adding,
     // removing, and merging as necessary.
     update: function(models, options) {
+      options = _.extend({add: true, merge: true, remove: true}, options);
+      if (options.parse) models = this.parse(models, options);
       var model, i, l, existing;
       var add = [], remove = [], modelMap = {};
-      var idAttr = this.model.prototype.idAttribute;
-      options = _.extend({add: true, merge: true, remove: true}, options);
-      if (options.parse) models = this.parse(models);
 
       // Allow a single model (or no argument) to be passed.
       if (!_.isArray(models)) models = models ? [models] : [];
@@ -2418,7 +2398,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       // Determine which models to add and merge, and which to remove.
       for (i = 0, l = models.length; i < l; i++) {
         model = models[i];
-        existing = this.get(model.id || model.cid || model[idAttr]);
+        existing = this.get(model);
         if (options.remove && existing) modelMap[existing.cid] = true;
         if ((options.add && !existing) || (options.merge && existing)) {
           add.push(model);
@@ -2442,11 +2422,11 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // any `add` or `remove` events. Fires `reset` when finished.
     reset: function(models, options) {
       options || (options = {});
-      if (options.parse) models = this.parse(models);
+      if (options.parse) models = this.parse(models, options);
       for (var i = 0, l = this.models.length; i < l; i++) {
         this._removeReference(this.models[i]);
       }
-      options.previousModels = this.models;
+      options.previousModels = this.models.slice();
       this._reset();
       if (models) this.add(models, _.extend({silent: true}, options));
       if (!options.silent) this.trigger('reset', this, options);
@@ -2454,14 +2434,13 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     },
 
     // Fetch the default set of models for this collection, resetting the
-    // collection when they arrive. If `add: true` is passed, appends the
-    // models to the collection instead of resetting.
+    // collection when they arrive. If `update: true` is passed, the response
+    // data will be passed through the `update` method instead of `reset`.
     fetch: function(options) {
       options = options ? _.clone(options) : {};
       if (options.parse === void 0) options.parse = true;
-      var collection = this;
       var success = options.success;
-      options.success = function(resp, status, xhr) {
+      options.success = function(collection, resp, options) {
         var method = options.update ? 'update' : 'reset';
         collection[method](resp, options);
         if (success) success(collection, resp, options);
@@ -2473,11 +2452,10 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // collection immediately, unless `wait: true` is passed, in which case we
     // wait for the server to agree.
     create: function(model, options) {
-      var collection = this;
       options = options ? _.clone(options) : {};
-      model = this._prepareModel(model, options);
-      if (!model) return false;
-      if (!options.wait) collection.add(model, options);
+      if (!(model = this._prepareModel(model, options))) return false;
+      if (!options.wait) this.add(model, options);
+      var collection = this;
       var success = options.success;
       options.success = function(model, resp, options) {
         if (options.wait) collection.add(model, options);
@@ -2489,7 +2467,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
 
     // **parse** converts a response into a list of models to be added to the
     // collection. The default implementation is just to pass it through.
-    parse: function(resp) {
+    parse: function(resp, options) {
       return resp;
     },
 
@@ -2498,19 +2476,11 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return new this.constructor(this.models);
     },
 
-    // Proxy to _'s chain. Can't be proxied the same way the rest of the
-    // underscore methods are proxied because it relies on the underscore
-    // constructor.
-    chain: function() {
-      return _(this.models).chain();
-    },
-
     // Reset all internal state. Called when the collection is reset.
     _reset: function() {
       this.length = 0;
-      this.models = [];
+      this.models.length = 0;
       this._byId  = {};
-      this._byCid = {};
     },
 
     // Prepare a model or hash of attributes to be added to this collection.
@@ -2544,6 +2514,14 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         if (model.id != null) this._byId[model.id] = model;
       }
       this.trigger.apply(this, arguments);
+    },
+
+    sortedIndex: function (model, value, context) {
+      value || (value = this.comparator);
+      var iterator = _.isFunction(value) ? value : function(model) {
+        return model.get(value);
+      };
+      return _.sortedIndex(this.models, model, iterator, context);
     }
 
   });
@@ -2552,9 +2530,9 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
   var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',
     'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',
     'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',
-    'max', 'min', 'sortedIndex', 'toArray', 'size', 'first', 'head', 'take',
-    'initial', 'rest', 'tail', 'last', 'without', 'indexOf', 'shuffle',
-    'lastIndexOf', 'isEmpty'];
+    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',
+    'tail', 'drop', 'last', 'without', 'indexOf', 'shuffle', 'lastIndexOf',
+    'isEmpty', 'chain'];
 
   // Mix in each Underscore method as a proxy to `Collection#models`.
   _.each(methods, function(method) {
@@ -2593,7 +2571,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
   // Cached regular expressions for matching named param parts and splatted
   // parts of route strings.
   var optionalParam = /\((.*?)\)/g;
-  var namedParam    = /:\w+/g;
+  var namedParam    = /(\(\?)?:\w+/g;
   var splatParam    = /\*\w+/g;
   var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
 
@@ -2617,6 +2595,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         var args = this._extractParameters(route, fragment);
         callback && callback.apply(this, args);
         this.trigger.apply(this, ['route:' + name].concat(args));
+        this.trigger('route', name, args);
         Backbone.history.trigger('route', this, name, args);
       }, this));
       return this;
@@ -2644,7 +2623,9 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     _routeToRegExp: function(route) {
       route = route.replace(escapeRegExp, '\\$&')
                    .replace(optionalParam, '(?:$1)?')
-                   .replace(namedParam, '([^\/]+)')
+                   .replace(namedParam, function(match, optional){
+                     return optional ? match : '([^\/]+)';
+                   })
                    .replace(splatParam, '(.*?)');
       return new RegExp('^' + route + '$');
     },
@@ -2666,7 +2647,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     this.handlers = [];
     _.bindAll(this, 'checkUrl');
 
-    // #1653 - Ensure that `History` can be used outside of the browser.
+    // Ensure that `History` can be used outside of the browser.
     if (typeof window !== 'undefined') {
       this.location = window.location;
       this.history = window.history;
@@ -2745,9 +2726,9 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       // Depending on whether we're using pushState or hashes, and whether
       // 'onhashchange' is supported, determine how we check the URL state.
       if (this._hasPushState) {
-        Backbone.$(window).bind('popstate', this.checkUrl);
+        Backbone.$(window).on('popstate', this.checkUrl);
       } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {
-        Backbone.$(window).bind('hashchange', this.checkUrl);
+        Backbone.$(window).on('hashchange', this.checkUrl);
       } else if (this._wantsHashChange) {
         this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
       }
@@ -2779,7 +2760,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
     // but possibly useful for unit testing Routers.
     stop: function() {
-      Backbone.$(window).unbind('popstate', this.checkUrl).unbind('hashchange', this.checkUrl);
+      Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);
       clearInterval(this._checkUrlInterval);
       History.started = false;
     },
@@ -2862,7 +2843,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         var href = location.href.replace(/(javascript:|#).*$/, '');
         location.replace(href + '#' + fragment);
       } else {
-        // #1649 - Some browsers require that `hash` contains a leading #.
+        // Some browsers require that `hash` contains a leading #.
         location.hash = '#' + fragment;
       }
     }
@@ -2922,18 +2903,6 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
       return this;
     },
 
-    // For small amounts of DOM Elements, where a full-blown template isn't
-    // needed, use **make** to manufacture elements, one at a time.
-    //
-    //     var el = this.make('li', {'class': 'row'}, this.model.escape('title'));
-    //
-    make: function(tagName, attributes, content) {
-      var el = document.createElement(tagName);
-      if (attributes) Backbone.$(el).attr(attributes);
-      if (content != null) Backbone.$(el).html(content);
-      return el;
-    },
-
     // Change the view's element (`this.el` property), including event
     // re-delegation.
     setElement: function(element, delegate) {
@@ -2971,9 +2940,9 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         method = _.bind(method, this);
         eventName += '.delegateEvents' + this.cid;
         if (selector === '') {
-          this.$el.bind(eventName, method);
+          this.$el.on(eventName, method);
         } else {
-          this.$el.delegate(selector, eventName, method);
+          this.$el.on(eventName, selector, method);
         }
       }
     },
@@ -2982,7 +2951,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     // You usually don't need to use this, but may wish to if you have multiple
     // Backbone views attached to the same DOM element.
     undelegateEvents: function() {
-      this.$el.unbind('.delegateEvents' + this.cid);
+      this.$el.off('.delegateEvents' + this.cid);
     },
 
     // Performs the initial configuration of a View with a set of options.
@@ -3003,7 +2972,8 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
         var attrs = _.extend({}, _.result(this, 'attributes'));
         if (this.id) attrs.id = _.result(this, 'id');
         if (this.className) attrs['class'] = _.result(this, 'className');
-        this.setElement(this.make(_.result(this, 'tagName'), attrs), false);
+        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
+        this.setElement($el, false);
       } else {
         this.setElement(_.result(this, 'el'), false);
       }
@@ -3085,19 +3055,19 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     }
 
     var success = options.success;
-    options.success = function(resp, status, xhr) {
-      if (success) success(resp, status, xhr);
+    options.success = function(resp) {
+      if (success) success(model, resp, options);
       model.trigger('sync', model, resp, options);
     };
 
     var error = options.error;
-    options.error = function(xhr, status, thrown) {
+    options.error = function(xhr) {
       if (error) error(model, xhr, options);
       model.trigger('error', model, xhr, options);
     };
 
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = Backbone.ajax(_.extend(params, options));
+    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
     return xhr;
   };
@@ -3123,7 +3093,7 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
     if (protoProps && _.has(protoProps, 'constructor')) {
       child = protoProps.constructor;
     } else {
-      child = function(){ parent.apply(this, arguments); };
+      child = function(){ return parent.apply(this, arguments); };
     }
 
     // Add static properties to the constructor function, if supplied.
@@ -3153,1233 +3123,6 @@ require.define("/node_modules/backbone/backbone.js",function(require,module,expo
   var urlError = function() {
     throw new Error('A "url" property or function must be specified');
   };
-
-}).call(this);
-
-});
-
-require.define("/node_modules/backbone/node_modules/underscore/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"underscore.js"}
-});
-
-require.define("/node_modules/backbone/node_modules/underscore/underscore.js",function(require,module,exports,__dirname,__filename,process,global){//     Underscore.js 1.4.3
-//     http://underscorejs.org
-//     (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
-//     Underscore may be freely distributed under the MIT license.
-
-(function() {
-
-  // Baseline setup
-  // --------------
-
-  // Establish the root object, `window` in the browser, or `global` on the server.
-  var root = this;
-
-  // Save the previous value of the `_` variable.
-  var previousUnderscore = root._;
-
-  // Establish the object that gets returned to break out of a loop iteration.
-  var breaker = {};
-
-  // Save bytes in the minified (but not gzipped) version:
-  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
-
-  // Create quick reference variables for speed access to core prototypes.
-  var push             = ArrayProto.push,
-      slice            = ArrayProto.slice,
-      concat           = ArrayProto.concat,
-      toString         = ObjProto.toString,
-      hasOwnProperty   = ObjProto.hasOwnProperty;
-
-  // All **ECMAScript 5** native function implementations that we hope to use
-  // are declared here.
-  var
-    nativeForEach      = ArrayProto.forEach,
-    nativeMap          = ArrayProto.map,
-    nativeReduce       = ArrayProto.reduce,
-    nativeReduceRight  = ArrayProto.reduceRight,
-    nativeFilter       = ArrayProto.filter,
-    nativeEvery        = ArrayProto.every,
-    nativeSome         = ArrayProto.some,
-    nativeIndexOf      = ArrayProto.indexOf,
-    nativeLastIndexOf  = ArrayProto.lastIndexOf,
-    nativeIsArray      = Array.isArray,
-    nativeKeys         = Object.keys,
-    nativeBind         = FuncProto.bind;
-
-  // Create a safe reference to the Underscore object for use below.
-  var _ = function(obj) {
-    if (obj instanceof _) return obj;
-    if (!(this instanceof _)) return new _(obj);
-    this._wrapped = obj;
-  };
-
-  // Export the Underscore object for **Node.js**, with
-  // backwards-compatibility for the old `require()` API. If we're in
-  // the browser, add `_` as a global object via a string identifier,
-  // for Closure Compiler "advanced" mode.
-  if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-      exports = module.exports = _;
-    }
-    exports._ = _;
-  } else {
-    root._ = _;
-  }
-
-  // Current version.
-  _.VERSION = '1.4.3';
-
-  // Collection Functions
-  // --------------------
-
-  // The cornerstone, an `each` implementation, aka `forEach`.
-  // Handles objects with the built-in `forEach`, arrays, and raw objects.
-  // Delegates to **ECMAScript 5**'s native `forEach` if available.
-  var each = _.each = _.forEach = function(obj, iterator, context) {
-    if (obj == null) return;
-    if (nativeForEach && obj.forEach === nativeForEach) {
-      obj.forEach(iterator, context);
-    } else if (obj.length === +obj.length) {
-      for (var i = 0, l = obj.length; i < l; i++) {
-        if (iterator.call(context, obj[i], i, obj) === breaker) return;
-      }
-    } else {
-      for (var key in obj) {
-        if (_.has(obj, key)) {
-          if (iterator.call(context, obj[key], key, obj) === breaker) return;
-        }
-      }
-    }
-  };
-
-  // Return the results of applying the iterator to each element.
-  // Delegates to **ECMAScript 5**'s native `map` if available.
-  _.map = _.collect = function(obj, iterator, context) {
-    var results = [];
-    if (obj == null) return results;
-    if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);
-    each(obj, function(value, index, list) {
-      results[results.length] = iterator.call(context, value, index, list);
-    });
-    return results;
-  };
-
-  var reduceError = 'Reduce of empty array with no initial value';
-
-  // **Reduce** builds up a single result from a list of values, aka `inject`,
-  // or `foldl`. Delegates to **ECMAScript 5**'s native `reduce` if available.
-  _.reduce = _.foldl = _.inject = function(obj, iterator, memo, context) {
-    var initial = arguments.length > 2;
-    if (obj == null) obj = [];
-    if (nativeReduce && obj.reduce === nativeReduce) {
-      if (context) iterator = _.bind(iterator, context);
-      return initial ? obj.reduce(iterator, memo) : obj.reduce(iterator);
-    }
-    each(obj, function(value, index, list) {
-      if (!initial) {
-        memo = value;
-        initial = true;
-      } else {
-        memo = iterator.call(context, memo, value, index, list);
-      }
-    });
-    if (!initial) throw new TypeError(reduceError);
-    return memo;
-  };
-
-  // The right-associative version of reduce, also known as `foldr`.
-  // Delegates to **ECMAScript 5**'s native `reduceRight` if available.
-  _.reduceRight = _.foldr = function(obj, iterator, memo, context) {
-    var initial = arguments.length > 2;
-    if (obj == null) obj = [];
-    if (nativeReduceRight && obj.reduceRight === nativeReduceRight) {
-      if (context) iterator = _.bind(iterator, context);
-      return initial ? obj.reduceRight(iterator, memo) : obj.reduceRight(iterator);
-    }
-    var length = obj.length;
-    if (length !== +length) {
-      var keys = _.keys(obj);
-      length = keys.length;
-    }
-    each(obj, function(value, index, list) {
-      index = keys ? keys[--length] : --length;
-      if (!initial) {
-        memo = obj[index];
-        initial = true;
-      } else {
-        memo = iterator.call(context, memo, obj[index], index, list);
-      }
-    });
-    if (!initial) throw new TypeError(reduceError);
-    return memo;
-  };
-
-  // Return the first value which passes a truth test. Aliased as `detect`.
-  _.find = _.detect = function(obj, iterator, context) {
-    var result;
-    any(obj, function(value, index, list) {
-      if (iterator.call(context, value, index, list)) {
-        result = value;
-        return true;
-      }
-    });
-    return result;
-  };
-
-  // Return all the elements that pass a truth test.
-  // Delegates to **ECMAScript 5**'s native `filter` if available.
-  // Aliased as `select`.
-  _.filter = _.select = function(obj, iterator, context) {
-    var results = [];
-    if (obj == null) return results;
-    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);
-    each(obj, function(value, index, list) {
-      if (iterator.call(context, value, index, list)) results[results.length] = value;
-    });
-    return results;
-  };
-
-  // Return all the elements for which a truth test fails.
-  _.reject = function(obj, iterator, context) {
-    return _.filter(obj, function(value, index, list) {
-      return !iterator.call(context, value, index, list);
-    }, context);
-  };
-
-  // Determine whether all of the elements match a truth test.
-  // Delegates to **ECMAScript 5**'s native `every` if available.
-  // Aliased as `all`.
-  _.every = _.all = function(obj, iterator, context) {
-    iterator || (iterator = _.identity);
-    var result = true;
-    if (obj == null) return result;
-    if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);
-    each(obj, function(value, index, list) {
-      if (!(result = result && iterator.call(context, value, index, list))) return breaker;
-    });
-    return !!result;
-  };
-
-  // Determine if at least one element in the object matches a truth test.
-  // Delegates to **ECMAScript 5**'s native `some` if available.
-  // Aliased as `any`.
-  var any = _.some = _.any = function(obj, iterator, context) {
-    iterator || (iterator = _.identity);
-    var result = false;
-    if (obj == null) return result;
-    if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);
-    each(obj, function(value, index, list) {
-      if (result || (result = iterator.call(context, value, index, list))) return breaker;
-    });
-    return !!result;
-  };
-
-  // Determine if the array or object contains a given value (using `===`).
-  // Aliased as `include`.
-  _.contains = _.include = function(obj, target) {
-    if (obj == null) return false;
-    if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;
-    return any(obj, function(value) {
-      return value === target;
-    });
-  };
-
-  // Invoke a method (with arguments) on every item in a collection.
-  _.invoke = function(obj, method) {
-    var args = slice.call(arguments, 2);
-    return _.map(obj, function(value) {
-      return (_.isFunction(method) ? method : value[method]).apply(value, args);
-    });
-  };
-
-  // Convenience version of a common use case of `map`: fetching a property.
-  _.pluck = function(obj, key) {
-    return _.map(obj, function(value){ return value[key]; });
-  };
-
-  // Convenience version of a common use case of `filter`: selecting only objects
-  // with specific `key:value` pairs.
-  _.where = function(obj, attrs) {
-    if (_.isEmpty(attrs)) return [];
-    return _.filter(obj, function(value) {
-      for (var key in attrs) {
-        if (attrs[key] !== value[key]) return false;
-      }
-      return true;
-    });
-  };
-
-  // Return the maximum element or (element-based computation).
-  // Can't optimize arrays of integers longer than 65,535 elements.
-  // See: https://bugs.webkit.org/show_bug.cgi?id=80797
-  _.max = function(obj, iterator, context) {
-    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
-      return Math.max.apply(Math, obj);
-    }
-    if (!iterator && _.isEmpty(obj)) return -Infinity;
-    var result = {computed : -Infinity, value: -Infinity};
-    each(obj, function(value, index, list) {
-      var computed = iterator ? iterator.call(context, value, index, list) : value;
-      computed >= result.computed && (result = {value : value, computed : computed});
-    });
-    return result.value;
-  };
-
-  // Return the minimum element (or element-based computation).
-  _.min = function(obj, iterator, context) {
-    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
-      return Math.min.apply(Math, obj);
-    }
-    if (!iterator && _.isEmpty(obj)) return Infinity;
-    var result = {computed : Infinity, value: Infinity};
-    each(obj, function(value, index, list) {
-      var computed = iterator ? iterator.call(context, value, index, list) : value;
-      computed < result.computed && (result = {value : value, computed : computed});
-    });
-    return result.value;
-  };
-
-  // Shuffle an array.
-  _.shuffle = function(obj) {
-    var rand;
-    var index = 0;
-    var shuffled = [];
-    each(obj, function(value) {
-      rand = _.random(index++);
-      shuffled[index - 1] = shuffled[rand];
-      shuffled[rand] = value;
-    });
-    return shuffled;
-  };
-
-  // An internal function to generate lookup iterators.
-  var lookupIterator = function(value) {
-    return _.isFunction(value) ? value : function(obj){ return obj[value]; };
-  };
-
-  // Sort the object's values by a criterion produced by an iterator.
-  _.sortBy = function(obj, value, context) {
-    var iterator = lookupIterator(value);
-    return _.pluck(_.map(obj, function(value, index, list) {
-      return {
-        value : value,
-        index : index,
-        criteria : iterator.call(context, value, index, list)
-      };
-    }).sort(function(left, right) {
-      var a = left.criteria;
-      var b = right.criteria;
-      if (a !== b) {
-        if (a > b || a === void 0) return 1;
-        if (a < b || b === void 0) return -1;
-      }
-      return left.index < right.index ? -1 : 1;
-    }), 'value');
-  };
-
-  // An internal function used for aggregate "group by" operations.
-  var group = function(obj, value, context, behavior) {
-    var result = {};
-    var iterator = lookupIterator(value || _.identity);
-    each(obj, function(value, index) {
-      var key = iterator.call(context, value, index, obj);
-      behavior(result, key, value);
-    });
-    return result;
-  };
-
-  // Groups the object's values by a criterion. Pass either a string attribute
-  // to group by, or a function that returns the criterion.
-  _.groupBy = function(obj, value, context) {
-    return group(obj, value, context, function(result, key, value) {
-      (_.has(result, key) ? result[key] : (result[key] = [])).push(value);
-    });
-  };
-
-  // Counts instances of an object that group by a certain criterion. Pass
-  // either a string attribute to count by, or a function that returns the
-  // criterion.
-  _.countBy = function(obj, value, context) {
-    return group(obj, value, context, function(result, key) {
-      if (!_.has(result, key)) result[key] = 0;
-      result[key]++;
-    });
-  };
-
-  // Use a comparator function to figure out the smallest index at which
-  // an object should be inserted so as to maintain order. Uses binary search.
-  _.sortedIndex = function(array, obj, iterator, context) {
-    iterator = iterator == null ? _.identity : lookupIterator(iterator);
-    var value = iterator.call(context, obj);
-    var low = 0, high = array.length;
-    while (low < high) {
-      var mid = (low + high) >>> 1;
-      iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
-    }
-    return low;
-  };
-
-  // Safely convert anything iterable into a real, live array.
-  _.toArray = function(obj) {
-    if (!obj) return [];
-    if (_.isArray(obj)) return slice.call(obj);
-    if (obj.length === +obj.length) return _.map(obj, _.identity);
-    return _.values(obj);
-  };
-
-  // Return the number of elements in an object.
-  _.size = function(obj) {
-    if (obj == null) return 0;
-    return (obj.length === +obj.length) ? obj.length : _.keys(obj).length;
-  };
-
-  // Array Functions
-  // ---------------
-
-  // Get the first element of an array. Passing **n** will return the first N
-  // values in the array. Aliased as `head` and `take`. The **guard** check
-  // allows it to work with `_.map`.
-  _.first = _.head = _.take = function(array, n, guard) {
-    if (array == null) return void 0;
-    return (n != null) && !guard ? slice.call(array, 0, n) : array[0];
-  };
-
-  // Returns everything but the last entry of the array. Especially useful on
-  // the arguments object. Passing **n** will return all the values in
-  // the array, excluding the last N. The **guard** check allows it to work with
-  // `_.map`.
-  _.initial = function(array, n, guard) {
-    return slice.call(array, 0, array.length - ((n == null) || guard ? 1 : n));
-  };
-
-  // Get the last element of an array. Passing **n** will return the last N
-  // values in the array. The **guard** check allows it to work with `_.map`.
-  _.last = function(array, n, guard) {
-    if (array == null) return void 0;
-    if ((n != null) && !guard) {
-      return slice.call(array, Math.max(array.length - n, 0));
-    } else {
-      return array[array.length - 1];
-    }
-  };
-
-  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
-  // Especially useful on the arguments object. Passing an **n** will return
-  // the rest N values in the array. The **guard**
-  // check allows it to work with `_.map`.
-  _.rest = _.tail = _.drop = function(array, n, guard) {
-    return slice.call(array, (n == null) || guard ? 1 : n);
-  };
-
-  // Trim out all falsy values from an array.
-  _.compact = function(array) {
-    return _.filter(array, _.identity);
-  };
-
-  // Internal implementation of a recursive `flatten` function.
-  var flatten = function(input, shallow, output) {
-    each(input, function(value) {
-      if (_.isArray(value)) {
-        shallow ? push.apply(output, value) : flatten(value, shallow, output);
-      } else {
-        output.push(value);
-      }
-    });
-    return output;
-  };
-
-  // Return a completely flattened version of an array.
-  _.flatten = function(array, shallow) {
-    return flatten(array, shallow, []);
-  };
-
-  // Return a version of the array that does not contain the specified value(s).
-  _.without = function(array) {
-    return _.difference(array, slice.call(arguments, 1));
-  };
-
-  // Produce a duplicate-free version of the array. If the array has already
-  // been sorted, you have the option of using a faster algorithm.
-  // Aliased as `unique`.
-  _.uniq = _.unique = function(array, isSorted, iterator, context) {
-    if (_.isFunction(isSorted)) {
-      context = iterator;
-      iterator = isSorted;
-      isSorted = false;
-    }
-    var initial = iterator ? _.map(array, iterator, context) : array;
-    var results = [];
-    var seen = [];
-    each(initial, function(value, index) {
-      if (isSorted ? (!index || seen[seen.length - 1] !== value) : !_.contains(seen, value)) {
-        seen.push(value);
-        results.push(array[index]);
-      }
-    });
-    return results;
-  };
-
-  // Produce an array that contains the union: each distinct element from all of
-  // the passed-in arrays.
-  _.union = function() {
-    return _.uniq(concat.apply(ArrayProto, arguments));
-  };
-
-  // Produce an array that contains every item shared between all the
-  // passed-in arrays.
-  _.intersection = function(array) {
-    var rest = slice.call(arguments, 1);
-    return _.filter(_.uniq(array), function(item) {
-      return _.every(rest, function(other) {
-        return _.indexOf(other, item) >= 0;
-      });
-    });
-  };
-
-  // Take the difference between one array and a number of other arrays.
-  // Only the elements present in just the first array will remain.
-  _.difference = function(array) {
-    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));
-    return _.filter(array, function(value){ return !_.contains(rest, value); });
-  };
-
-  // Zip together multiple lists into a single array -- elements that share
-  // an index go together.
-  _.zip = function() {
-    var args = slice.call(arguments);
-    var length = _.max(_.pluck(args, 'length'));
-    var results = new Array(length);
-    for (var i = 0; i < length; i++) {
-      results[i] = _.pluck(args, "" + i);
-    }
-    return results;
-  };
-
-  // Converts lists into objects. Pass either a single array of `[key, value]`
-  // pairs, or two parallel arrays of the same length -- one of keys, and one of
-  // the corresponding values.
-  _.object = function(list, values) {
-    if (list == null) return {};
-    var result = {};
-    for (var i = 0, l = list.length; i < l; i++) {
-      if (values) {
-        result[list[i]] = values[i];
-      } else {
-        result[list[i][0]] = list[i][1];
-      }
-    }
-    return result;
-  };
-
-  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),
-  // we need this function. Return the position of the first occurrence of an
-  // item in an array, or -1 if the item is not included in the array.
-  // Delegates to **ECMAScript 5**'s native `indexOf` if available.
-  // If the array is large and already in sort order, pass `true`
-  // for **isSorted** to use binary search.
-  _.indexOf = function(array, item, isSorted) {
-    if (array == null) return -1;
-    var i = 0, l = array.length;
-    if (isSorted) {
-      if (typeof isSorted == 'number') {
-        i = (isSorted < 0 ? Math.max(0, l + isSorted) : isSorted);
-      } else {
-        i = _.sortedIndex(array, item);
-        return array[i] === item ? i : -1;
-      }
-    }
-    if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item, isSorted);
-    for (; i < l; i++) if (array[i] === item) return i;
-    return -1;
-  };
-
-  // Delegates to **ECMAScript 5**'s native `lastIndexOf` if available.
-  _.lastIndexOf = function(array, item, from) {
-    if (array == null) return -1;
-    var hasIndex = from != null;
-    if (nativeLastIndexOf && array.lastIndexOf === nativeLastIndexOf) {
-      return hasIndex ? array.lastIndexOf(item, from) : array.lastIndexOf(item);
-    }
-    var i = (hasIndex ? from : array.length);
-    while (i--) if (array[i] === item) return i;
-    return -1;
-  };
-
-  // Generate an integer Array containing an arithmetic progression. A port of
-  // the native Python `range()` function. See
-  // [the Python documentation](http://docs.python.org/library/functions.html#range).
-  _.range = function(start, stop, step) {
-    if (arguments.length <= 1) {
-      stop = start || 0;
-      start = 0;
-    }
-    step = arguments[2] || 1;
-
-    var len = Math.max(Math.ceil((stop - start) / step), 0);
-    var idx = 0;
-    var range = new Array(len);
-
-    while(idx < len) {
-      range[idx++] = start;
-      start += step;
-    }
-
-    return range;
-  };
-
-  // Function (ahem) Functions
-  // ------------------
-
-  // Reusable constructor function for prototype setting.
-  var ctor = function(){};
-
-  // Create a function bound to a given object (assigning `this`, and arguments,
-  // optionally). Binding with arguments is also known as `curry`.
-  // Delegates to **ECMAScript 5**'s native `Function.bind` if available.
-  // We check for `func.bind` first, to fail fast when `func` is undefined.
-  _.bind = function(func, context) {
-    var args, bound;
-    if (func.bind === nativeBind && nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
-    if (!_.isFunction(func)) throw new TypeError;
-    args = slice.call(arguments, 2);
-    return bound = function() {
-      if (!(this instanceof bound)) return func.apply(context, args.concat(slice.call(arguments)));
-      ctor.prototype = func.prototype;
-      var self = new ctor;
-      ctor.prototype = null;
-      var result = func.apply(self, args.concat(slice.call(arguments)));
-      if (Object(result) === result) return result;
-      return self;
-    };
-  };
-
-  // Bind all of an object's methods to that object. Useful for ensuring that
-  // all callbacks defined on an object belong to it.
-  _.bindAll = function(obj) {
-    var funcs = slice.call(arguments, 1);
-    if (funcs.length == 0) funcs = _.functions(obj);
-    each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });
-    return obj;
-  };
-
-  // Memoize an expensive function by storing its results.
-  _.memoize = function(func, hasher) {
-    var memo = {};
-    hasher || (hasher = _.identity);
-    return function() {
-      var key = hasher.apply(this, arguments);
-      return _.has(memo, key) ? memo[key] : (memo[key] = func.apply(this, arguments));
-    };
-  };
-
-  // Delays a function for the given number of milliseconds, and then calls
-  // it with the arguments supplied.
-  _.delay = function(func, wait) {
-    var args = slice.call(arguments, 2);
-    return setTimeout(function(){ return func.apply(null, args); }, wait);
-  };
-
-  // Defers a function, scheduling it to run after the current call stack has
-  // cleared.
-  _.defer = function(func) {
-    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
-  };
-
-  // Returns a function, that, when invoked, will only be triggered at most once
-  // during a given window of time.
-  _.throttle = function(func, wait) {
-    var context, args, timeout, result;
-    var previous = 0;
-    var later = function() {
-      previous = new Date;
-      timeout = null;
-      result = func.apply(context, args);
-    };
-    return function() {
-      var now = new Date;
-      var remaining = wait - (now - previous);
-      context = this;
-      args = arguments;
-      if (remaining <= 0) {
-        clearTimeout(timeout);
-        timeout = null;
-        previous = now;
-        result = func.apply(context, args);
-      } else if (!timeout) {
-        timeout = setTimeout(later, remaining);
-      }
-      return result;
-    };
-  };
-
-  // Returns a function, that, as long as it continues to be invoked, will not
-  // be triggered. The function will be called after it stops being called for
-  // N milliseconds. If `immediate` is passed, trigger the function on the
-  // leading edge, instead of the trailing.
-  _.debounce = function(func, wait, immediate) {
-    var timeout, result;
-    return function() {
-      var context = this, args = arguments;
-      var later = function() {
-        timeout = null;
-        if (!immediate) result = func.apply(context, args);
-      };
-      var callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) result = func.apply(context, args);
-      return result;
-    };
-  };
-
-  // Returns a function that will be executed at most one time, no matter how
-  // often you call it. Useful for lazy initialization.
-  _.once = function(func) {
-    var ran = false, memo;
-    return function() {
-      if (ran) return memo;
-      ran = true;
-      memo = func.apply(this, arguments);
-      func = null;
-      return memo;
-    };
-  };
-
-  // Returns the first function passed as an argument to the second,
-  // allowing you to adjust arguments, run code before and after, and
-  // conditionally execute the original function.
-  _.wrap = function(func, wrapper) {
-    return function() {
-      var args = [func];
-      push.apply(args, arguments);
-      return wrapper.apply(this, args);
-    };
-  };
-
-  // Returns a function that is the composition of a list of functions, each
-  // consuming the return value of the function that follows.
-  _.compose = function() {
-    var funcs = arguments;
-    return function() {
-      var args = arguments;
-      for (var i = funcs.length - 1; i >= 0; i--) {
-        args = [funcs[i].apply(this, args)];
-      }
-      return args[0];
-    };
-  };
-
-  // Returns a function that will only be executed after being called N times.
-  _.after = function(times, func) {
-    if (times <= 0) return func();
-    return function() {
-      if (--times < 1) {
-        return func.apply(this, arguments);
-      }
-    };
-  };
-
-  // Object Functions
-  // ----------------
-
-  // Retrieve the names of an object's properties.
-  // Delegates to **ECMAScript 5**'s native `Object.keys`
-  _.keys = nativeKeys || function(obj) {
-    if (obj !== Object(obj)) throw new TypeError('Invalid object');
-    var keys = [];
-    for (var key in obj) if (_.has(obj, key)) keys[keys.length] = key;
-    return keys;
-  };
-
-  // Retrieve the values of an object's properties.
-  _.values = function(obj) {
-    var values = [];
-    for (var key in obj) if (_.has(obj, key)) values.push(obj[key]);
-    return values;
-  };
-
-  // Convert an object into a list of `[key, value]` pairs.
-  _.pairs = function(obj) {
-    var pairs = [];
-    for (var key in obj) if (_.has(obj, key)) pairs.push([key, obj[key]]);
-    return pairs;
-  };
-
-  // Invert the keys and values of an object. The values must be serializable.
-  _.invert = function(obj) {
-    var result = {};
-    for (var key in obj) if (_.has(obj, key)) result[obj[key]] = key;
-    return result;
-  };
-
-  // Return a sorted list of the function names available on the object.
-  // Aliased as `methods`
-  _.functions = _.methods = function(obj) {
-    var names = [];
-    for (var key in obj) {
-      if (_.isFunction(obj[key])) names.push(key);
-    }
-    return names.sort();
-  };
-
-  // Extend a given object with all the properties in passed-in object(s).
-  _.extend = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-      if (source) {
-        for (var prop in source) {
-          obj[prop] = source[prop];
-        }
-      }
-    });
-    return obj;
-  };
-
-  // Return a copy of the object only containing the whitelisted properties.
-  _.pick = function(obj) {
-    var copy = {};
-    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));
-    each(keys, function(key) {
-      if (key in obj) copy[key] = obj[key];
-    });
-    return copy;
-  };
-
-   // Return a copy of the object without the blacklisted properties.
-  _.omit = function(obj) {
-    var copy = {};
-    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));
-    for (var key in obj) {
-      if (!_.contains(keys, key)) copy[key] = obj[key];
-    }
-    return copy;
-  };
-
-  // Fill in a given object with default properties.
-  _.defaults = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-      if (source) {
-        for (var prop in source) {
-          if (obj[prop] == null) obj[prop] = source[prop];
-        }
-      }
-    });
-    return obj;
-  };
-
-  // Create a (shallow-cloned) duplicate of an object.
-  _.clone = function(obj) {
-    if (!_.isObject(obj)) return obj;
-    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
-  };
-
-  // Invokes interceptor with the obj, and then returns obj.
-  // The primary purpose of this method is to "tap into" a method chain, in
-  // order to perform operations on intermediate results within the chain.
-  _.tap = function(obj, interceptor) {
-    interceptor(obj);
-    return obj;
-  };
-
-  // Internal recursive comparison function for `isEqual`.
-  var eq = function(a, b, aStack, bStack) {
-    // Identical objects are equal. `0 === -0`, but they aren't identical.
-    // See the Harmony `egal` proposal: http://wiki.ecmascript.org/doku.php?id=harmony:egal.
-    if (a === b) return a !== 0 || 1 / a == 1 / b;
-    // A strict comparison is necessary because `null == undefined`.
-    if (a == null || b == null) return a === b;
-    // Unwrap any wrapped objects.
-    if (a instanceof _) a = a._wrapped;
-    if (b instanceof _) b = b._wrapped;
-    // Compare `[[Class]]` names.
-    var className = toString.call(a);
-    if (className != toString.call(b)) return false;
-    switch (className) {
-      // Strings, numbers, dates, and booleans are compared by value.
-      case '[object String]':
-        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
-        // equivalent to `new String("5")`.
-        return a == String(b);
-      case '[object Number]':
-        // `NaN`s are equivalent, but non-reflexive. An `egal` comparison is performed for
-        // other numeric values.
-        return a != +a ? b != +b : (a == 0 ? 1 / a == 1 / b : a == +b);
-      case '[object Date]':
-      case '[object Boolean]':
-        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
-        // millisecond representations. Note that invalid dates with millisecond representations
-        // of `NaN` are not equivalent.
-        return +a == +b;
-      // RegExps are compared by their source patterns and flags.
-      case '[object RegExp]':
-        return a.source == b.source &&
-               a.global == b.global &&
-               a.multiline == b.multiline &&
-               a.ignoreCase == b.ignoreCase;
-    }
-    if (typeof a != 'object' || typeof b != 'object') return false;
-    // Assume equality for cyclic structures. The algorithm for detecting cyclic
-    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
-    var length = aStack.length;
-    while (length--) {
-      // Linear search. Performance is inversely proportional to the number of
-      // unique nested structures.
-      if (aStack[length] == a) return bStack[length] == b;
-    }
-    // Add the first object to the stack of traversed objects.
-    aStack.push(a);
-    bStack.push(b);
-    var size = 0, result = true;
-    // Recursively compare objects and arrays.
-    if (className == '[object Array]') {
-      // Compare array lengths to determine if a deep comparison is necessary.
-      size = a.length;
-      result = size == b.length;
-      if (result) {
-        // Deep compare the contents, ignoring non-numeric properties.
-        while (size--) {
-          if (!(result = eq(a[size], b[size], aStack, bStack))) break;
-        }
-      }
-    } else {
-      // Objects with different constructors are not equivalent, but `Object`s
-      // from different frames are.
-      var aCtor = a.constructor, bCtor = b.constructor;
-      if (aCtor !== bCtor && !(_.isFunction(aCtor) && (aCtor instanceof aCtor) &&
-                               _.isFunction(bCtor) && (bCtor instanceof bCtor))) {
-        return false;
-      }
-      // Deep compare objects.
-      for (var key in a) {
-        if (_.has(a, key)) {
-          // Count the expected number of properties.
-          size++;
-          // Deep compare each member.
-          if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;
-        }
-      }
-      // Ensure that both objects contain the same number of properties.
-      if (result) {
-        for (key in b) {
-          if (_.has(b, key) && !(size--)) break;
-        }
-        result = !size;
-      }
-    }
-    // Remove the first object from the stack of traversed objects.
-    aStack.pop();
-    bStack.pop();
-    return result;
-  };
-
-  // Perform a deep comparison to check if two objects are equal.
-  _.isEqual = function(a, b) {
-    return eq(a, b, [], []);
-  };
-
-  // Is a given array, string, or object empty?
-  // An "empty" object has no enumerable own-properties.
-  _.isEmpty = function(obj) {
-    if (obj == null) return true;
-    if (_.isArray(obj) || _.isString(obj)) return obj.length === 0;
-    for (var key in obj) if (_.has(obj, key)) return false;
-    return true;
-  };
-
-  // Is a given value a DOM element?
-  _.isElement = function(obj) {
-    return !!(obj && obj.nodeType === 1);
-  };
-
-  // Is a given value an array?
-  // Delegates to ECMA5's native Array.isArray
-  _.isArray = nativeIsArray || function(obj) {
-    return toString.call(obj) == '[object Array]';
-  };
-
-  // Is a given variable an object?
-  _.isObject = function(obj) {
-    return obj === Object(obj);
-  };
-
-  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.
-  each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
-    _['is' + name] = function(obj) {
-      return toString.call(obj) == '[object ' + name + ']';
-    };
-  });
-
-  // Define a fallback version of the method in browsers (ahem, IE), where
-  // there isn't any inspectable "Arguments" type.
-  if (!_.isArguments(arguments)) {
-    _.isArguments = function(obj) {
-      return !!(obj && _.has(obj, 'callee'));
-    };
-  }
-
-  // Optimize `isFunction` if appropriate.
-  if (typeof (/./) !== 'function') {
-    _.isFunction = function(obj) {
-      return typeof obj === 'function';
-    };
-  }
-
-  // Is a given object a finite number?
-  _.isFinite = function(obj) {
-    return isFinite(obj) && !isNaN(parseFloat(obj));
-  };
-
-  // Is the given value `NaN`? (NaN is the only number which does not equal itself).
-  _.isNaN = function(obj) {
-    return _.isNumber(obj) && obj != +obj;
-  };
-
-  // Is a given value a boolean?
-  _.isBoolean = function(obj) {
-    return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
-  };
-
-  // Is a given value equal to null?
-  _.isNull = function(obj) {
-    return obj === null;
-  };
-
-  // Is a given variable undefined?
-  _.isUndefined = function(obj) {
-    return obj === void 0;
-  };
-
-  // Shortcut function for checking if an object has a given property directly
-  // on itself (in other words, not on a prototype).
-  _.has = function(obj, key) {
-    return hasOwnProperty.call(obj, key);
-  };
-
-  // Utility Functions
-  // -----------------
-
-  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
-  // previous owner. Returns a reference to the Underscore object.
-  _.noConflict = function() {
-    root._ = previousUnderscore;
-    return this;
-  };
-
-  // Keep the identity function around for default iterators.
-  _.identity = function(value) {
-    return value;
-  };
-
-  // Run a function **n** times.
-  _.times = function(n, iterator, context) {
-    var accum = Array(n);
-    for (var i = 0; i < n; i++) accum[i] = iterator.call(context, i);
-    return accum;
-  };
-
-  // Return a random integer between min and max (inclusive).
-  _.random = function(min, max) {
-    if (max == null) {
-      max = min;
-      min = 0;
-    }
-    return min + (0 | Math.random() * (max - min + 1));
-  };
-
-  // List of HTML entities for escaping.
-  var entityMap = {
-    escape: {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#x27;',
-      '/': '&#x2F;'
-    }
-  };
-  entityMap.unescape = _.invert(entityMap.escape);
-
-  // Regexes containing the keys and values listed immediately above.
-  var entityRegexes = {
-    escape:   new RegExp('[' + _.keys(entityMap.escape).join('') + ']', 'g'),
-    unescape: new RegExp('(' + _.keys(entityMap.unescape).join('|') + ')', 'g')
-  };
-
-  // Functions for escaping and unescaping strings to/from HTML interpolation.
-  _.each(['escape', 'unescape'], function(method) {
-    _[method] = function(string) {
-      if (string == null) return '';
-      return ('' + string).replace(entityRegexes[method], function(match) {
-        return entityMap[method][match];
-      });
-    };
-  });
-
-  // If the value of the named property is a function then invoke it;
-  // otherwise, return it.
-  _.result = function(object, property) {
-    if (object == null) return null;
-    var value = object[property];
-    return _.isFunction(value) ? value.call(object) : value;
-  };
-
-  // Add your own custom functions to the Underscore object.
-  _.mixin = function(obj) {
-    each(_.functions(obj), function(name){
-      var func = _[name] = obj[name];
-      _.prototype[name] = function() {
-        var args = [this._wrapped];
-        push.apply(args, arguments);
-        return result.call(this, func.apply(_, args));
-      };
-    });
-  };
-
-  // Generate a unique integer id (unique within the entire client session).
-  // Useful for temporary DOM ids.
-  var idCounter = 0;
-  _.uniqueId = function(prefix) {
-    var id = '' + ++idCounter;
-    return prefix ? prefix + id : id;
-  };
-
-  // By default, Underscore uses ERB-style template delimiters, change the
-  // following template settings to use alternative delimiters.
-  _.templateSettings = {
-    evaluate    : /<%([\s\S]+?)%>/g,
-    interpolate : /<%=([\s\S]+?)%>/g,
-    escape      : /<%-([\s\S]+?)%>/g
-  };
-
-  // When customizing `templateSettings`, if you don't want to define an
-  // interpolation, evaluation or escaping regex, we need one that is
-  // guaranteed not to match.
-  var noMatch = /(.)^/;
-
-  // Certain characters need to be escaped so that they can be put into a
-  // string literal.
-  var escapes = {
-    "'":      "'",
-    '\\':     '\\',
-    '\r':     'r',
-    '\n':     'n',
-    '\t':     't',
-    '\u2028': 'u2028',
-    '\u2029': 'u2029'
-  };
-
-  var escaper = /\\|'|\r|\n|\t|\u2028|\u2029/g;
-
-  // JavaScript micro-templating, similar to John Resig's implementation.
-  // Underscore templating handles arbitrary delimiters, preserves whitespace,
-  // and correctly escapes quotes within interpolated code.
-  _.template = function(text, data, settings) {
-    settings = _.defaults({}, settings, _.templateSettings);
-
-    // Combine delimiters into one regular expression via alternation.
-    var matcher = new RegExp([
-      (settings.escape || noMatch).source,
-      (settings.interpolate || noMatch).source,
-      (settings.evaluate || noMatch).source
-    ].join('|') + '|$', 'g');
-
-    // Compile the template source, escaping string literals appropriately.
-    var index = 0;
-    var source = "__p+='";
-    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
-      source += text.slice(index, offset)
-        .replace(escaper, function(match) { return '\\' + escapes[match]; });
-
-      if (escape) {
-        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
-      }
-      if (interpolate) {
-        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
-      }
-      if (evaluate) {
-        source += "';\n" + evaluate + "\n__p+='";
-      }
-      index = offset + match.length;
-      return match;
-    });
-    source += "';\n";
-
-    // If a variable is not specified, place data values in local scope.
-    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
-
-    source = "var __t,__p='',__j=Array.prototype.join," +
-      "print=function(){__p+=__j.call(arguments,'');};\n" +
-      source + "return __p;\n";
-
-    try {
-      var render = new Function(settings.variable || 'obj', '_', source);
-    } catch (e) {
-      e.source = source;
-      throw e;
-    }
-
-    if (data) return render(data, _);
-    var template = function(data) {
-      return render.call(this, data, _);
-    };
-
-    // Provide the compiled function source as a convenience for precompilation.
-    template.source = 'function(' + (settings.variable || 'obj') + '){\n' + source + '}';
-
-    return template;
-  };
-
-  // Add a "chain" function, which will delegate to the wrapper.
-  _.chain = function(obj) {
-    return _(obj).chain();
-  };
-
-  // OOP
-  // ---------------
-  // If Underscore is called as a function, it returns a wrapped object that
-  // can be used OO-style. This wrapper holds altered versions of all the
-  // underscore functions. Wrapped objects may be chained.
-
-  // Helper function to continue chaining intermediate results.
-  var result = function(obj) {
-    return this._chain ? _(obj).chain() : obj;
-  };
-
-  // Add all of the Underscore functions to the wrapper object.
-  _.mixin(_);
-
-  // Add all mutator Array functions to the wrapper.
-  each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
-    var method = ArrayProto[name];
-    _.prototype[name] = function() {
-      var obj = this._wrapped;
-      method.apply(obj, arguments);
-      if ((name == 'shift' || name == 'splice') && obj.length === 0) delete obj[0];
-      return result.call(this, obj);
-    };
-  });
-
-  // Add all accessor Array functions to the wrapper.
-  each(['concat', 'join', 'slice'], function(name) {
-    var method = ArrayProto[name];
-    _.prototype[name] = function() {
-      return result.call(this, method.apply(this._wrapped, arguments));
-    };
-  });
-
-  _.extend(_.prototype, {
-
-    // Start chaining a wrapped Underscore object.
-    chain: function() {
-      this._chain = true;
-      return this;
-    },
-
-    // Extracts the result from a wrapped and chained object.
-    value: function() {
-      return this._wrapped;
-    }
-
-  });
 
 }).call(this);
 
@@ -4823,6 +3566,7 @@ var Sandbox = Backbone.View.extend({
           deferred: whenLevelOpen,
           command: command
         });
+        this.hide();
 
         whenLevelOpen.promise.then(function() {
           command.finishWith(deferred);
@@ -5498,6 +4242,15 @@ function isPromise(object) {
 }
 
 /**
+ * @returns whether the given object can be coerced to a promise.
+ * Otherwise it is a fulfilled value.
+ */
+exports.isPromiseAlike = isPromiseAlike;
+function isPromiseAlike(object) {
+    return object && typeof object.then === "function";
+}
+
+/**
  * @returns whether the given object is a resolved promise.
  */
 exports.isResolved = isResolved;
@@ -5511,7 +4264,7 @@ function isResolved(object) {
  */
 exports.isFulfilled = isFulfilled;
 function isFulfilled(object) {
-    return !isPromise(valueOf(object));
+    return !isPromiseAlike(valueOf(object));
 }
 
 /**
@@ -5548,7 +4301,6 @@ function displayErrors() {
  */
 exports.reject = reject;
 function reject(exception) {
-    exception = exception || new Error();
     var rejection = makePromise({
         "when": function (rejected) {
             // note that the error has been handled
@@ -5597,7 +4349,7 @@ function resolve(object) {
     // implementations on primordial prototypes are harmless.
     object = valueOf(object);
     // assimilate thenables, CommonJS/Promises/A
-    if (object && typeof object.then === "function") {
+    if (isPromiseAlike(object)) {
         var deferred = defer();
         object.then(deferred.resolve, deferred.reject, deferred.notify);
         return deferred.promise;
@@ -5740,14 +4492,14 @@ function when(value, fulfilled, rejected, progressed) {
 
     function _fulfilled(value) {
         try {
-            return fulfilled ? fulfilled(value) : value;
+            return typeof fulfilled === "function" ? fulfilled(value) : value;
         } catch (exception) {
             return reject(exception);
         }
     }
 
     function _rejected(exception) {
-        if (rejected) {
+        if (typeof rejected === "function") {
             makeStackTraceLong(exception, resolvedValue);
             try {
                 return rejected(exception);
@@ -5759,7 +4511,7 @@ function when(value, fulfilled, rejected, progressed) {
     }
 
     function _progressed(value) {
-        return progressed ? progressed(value) : value;
+        return typeof progressed === "function" ? progressed(value) : value;
     }
 
     var resolvedValue = resolve(value);
@@ -6301,8 +5053,7 @@ function delay(promise, timeout) {
  * Passes a continuation to a Node function, which is called with the given
  * arguments provided as an array, and returns a promise.
  *
- *      var readFile = require("fs").readFile;
- *      Q.nfapply(readFile, [__filename])
+ *      Q.nfapply(FS.readFile, [__filename])
  *      .then(function (content) {
  *      })
  *
@@ -6321,8 +5072,7 @@ function nfapply(callback, args) {
  * Passes a continuation to a Node function, which is called with the given
  * arguments provided individually, and returns a promise.
  *
- *      var readFile = require("fs").readFile;
- *      Q.nfcall(readFile, __filename)
+ *      Q.nfcall(FS.readFile, __filename)
  *      .then(function (content) {
  *      })
  *
@@ -6363,7 +5113,6 @@ function nfbind(callback/*, ...args */) {
  * Passes a continuation to a Node function, which is called with a given
  * `this` value and arguments provided as an array, and returns a promise.
  *
- *      var FS = (require)("fs");
  *      Q.napply(FS.readFile, FS, [__filename])
  *      .then(function (content) {
  *      })
@@ -6378,7 +5127,6 @@ function napply(callback, thisp, args) {
  * Passes a continuation to a Node function, which is called with a given
  * `this` value and arguments provided individually, and returns a promise.
  *
- *      var FS = (require)("fs");
  *      Q.ncall(FS.readFile, FS, __filename)
  *      .then(function (content) {
  *      })
@@ -6587,7 +5335,7 @@ var getStartDialog = exports.getStartDialog = function(level) {
     }
   };
   var startCopy = _.clone(
-    level.startDialog[util.getDefaultLocale()] || level.startDialog
+    level.startDialog[getDefaultLocale()] || level.startDialog
   );
   startCopy.childViews.unshift(errorAlert);
 
@@ -6602,6 +5350,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-finished': {
     '__desc__': 'One of the lines in the next level dialog',
+    'ja': '最後のレベルをクリアしました！すごい！！',
     'en_US': '最後のレベルをクリアしました！すごい！！',
     'zh_CN': '我的个天！你完成了最后一关，碉堡了！'
   },
@@ -6609,18 +5358,21 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   'finish-dialog-next': {
     '__desc__': 'One of the lines in the next level dialog',
     'en_US': '次の章 *"{nextLevel}"* へ進みますか？',
+    'ja': '次の章 *"{nextLevel}"* へ進みますか？',
     'zh_CN': '要不前进到下一关 *“{nextLevel}”*？'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-win': {
     '__desc__': 'One of the lines in the next level dialog',
     'en_US': '素晴らしい！このレベルをクリアしましたね。',
+    'ja': '素晴らしい！このレベルをクリアしましたね。',
     'zh_CN': '牛鼻啊！你达到或者完爆了我们的答案。'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-lose': {
     '__desc__': 'When the user entered more commands than our best, encourage them to do better',
     'en_US': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
+    'ja': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
     'zh_CN': '试试看你能否在 {best} 之内搞定 :D'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -6774,6 +5526,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   'learn-git-branching': {
     '__desc__': 'The title of the app, with spaces',
     'en_US': 'Learn Git Branching',
+    'ja': '日本語版リポジトリ',
     'ko': 'Git 브랜치 배우기',
     'zh_CN': '学习Git分支'
   },
@@ -6844,6 +5597,16 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
     'zh_CN': '语言重置为默认的 {locale}'
   },
   ///////////////////////////////////////////////////////////////////////////
+  'show-command': {
+    '__desc__': 'command output title from "show"',
+    'en_US': 'Please use one of the following commands for more info:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
+  'show-all-commands': {
+    '__desc__': 'command output title from "show commands"',
+    'en_US': 'Here is a list of all the commmands available:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
   'cd-command': {
     '__desc__': 'dummy command output for the command in the key',
     'en_US': 'Directory changed to "/directories/dont/matter/in/this/demo"',
@@ -6900,7 +5663,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'already-solved': {
     '__desc__': 'When you play in a level that is already solved',
-    'en_US': 'You have alreaady solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
+    'en_US': 'You have already solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
     'zh_CN': '你已经解决了本关，输入 "levels" 尝试其他关卡，或者输入 "sandbox" 回到沙盒中'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -7183,8 +5946,11 @@ if (require('../util').isBrowser()) {
   * and simply pipes commands to the main events system
 **/
 function CommandUI() {
+  var Views = require('../views');
   var Collections = require('../models/collections');
   var CommandViews = require('../views/commandViews');
+
+  var mainHelprBar = new Views.MainHelperBar();
 
   this.commandCollection = new Collections.CommandCollection();
   this.commandBuffer = new Collections.CommandBuffer({
@@ -7261,7 +6027,8 @@ var regexMap = {
   'start dialog': /^start dialog$/,
   'show goal': /^(show goal|goal|help goal)$/,
   'hide goal': /^hide goal$/,
-  'show solution': /^show solution($|\s)/
+  'show solution': /^show solution($|\s)/,
+  'objective': /^(objective|assignment)$/
 };
 
 var parse = util.genParseCommand(regexMap, 'processLevelCommand');
@@ -7307,6 +6074,31 @@ var Level = Sandbox.extend({
     setTimeout(function() {
       deferred.resolve();
     }, this.getAnimationTime() * 1.2);
+  },
+
+  objectiveDialog: function(command, deferred, levelObj) {
+    levelObj = (levelObj === undefined) ? this.level : levelObj;
+
+    if (!levelObj || !levelObj.startDialog) {
+      command.set('error', new Errors.GitError({
+        msg: intl.str('no-start-dialog')
+      }));
+      deferred.resolve();
+      return;
+    }
+
+    var dialog = _.clone(intl.getStartDialog(levelObj));
+    // grab the last slide only
+    dialog.childViews = dialog.childViews.splice(-1);
+    new MultiView(_.extend(
+      dialog,
+      { deferred: deferred }
+    ));
+
+    // when its closed we are done
+    deferred.promise.then(function() {
+      command.set('status', 'finished');
+    });
   },
 
   startDialog: function(command, deferred) {
@@ -7540,6 +6332,7 @@ var Level = Sandbox.extend({
     }
 
     // TODO refactor this ugly ass switch statement...
+    // BIG TODO REALLY REFACTOR HAX HAX
     // ok so lets see if they solved it...
     var current = this.mainVis.gitEngine.exportTree();
     var solved;
@@ -7551,6 +6344,12 @@ var Level = Sandbox.extend({
       solved = this.treeCompare.compareAllBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString);
     } else if (this.level.compareOnlyMasterHashAgnostic) {
       solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+    } else if (this.level.compareOnlyMasterHashAgnosticWithAsserts) {
+      solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+      solved = solved && this.treeCompare.evalAsserts(
+        current,
+        this.level.goalAsserts
+      );
     } else {
       solved = this.treeCompare.compareAllBranchesWithinTreesAndHEAD(current, this.level.goalTreeString);
     }
@@ -7719,7 +6518,8 @@ var Level = Sandbox.extend({
       'hide goal': this.hideGoal,
       'show solution': this.showSolution,
       'start dialog': this.startDialog,
-      'help level': this.startDialog
+      'help level': this.startDialog,
+      'objective': this.objectiveDialog
     };
     var method = methodMap[command.get('method')];
     if (!method) {
@@ -9000,6 +7800,7 @@ GitEngine.prototype.rebaseAltID = function(id) {
     }]
   ];
 
+  // for loop for early return
   for (var i = 0; i < regexMap.length; i++) {
     var regex = regexMap[i][0];
     var func = regexMap[i][1];
@@ -10337,6 +9138,79 @@ TreeCompare.prototype.compareBranchesWithinTreesHashAgnostic = function(treeA, t
   return result;
 };
 
+TreeCompare.prototype.evalAsserts = function(tree, assertsPerBranch) {
+  var result = true;
+  _.each(assertsPerBranch, function(asserts, branchName) {
+    result = result && this.evalAssertsOnBranch(tree, branchName, asserts);
+  }, this);
+
+  console.log('EVAL ASSETS was', result);
+  return result;
+};
+
+TreeCompare.prototype.evalAssertsOnBranch = function(tree, branchName, asserts) {
+  tree = this.convertTreeSafe(tree);
+
+  // here is the outline:
+  // * make a data object
+  // * go to the branch given by the key
+  // * traverse upwards, storing the amount of hashes on each in the data object
+  // * then come back and perform functions on data
+  console.log('doing asserts on', branchName);
+
+  if (!tree.branches[branchName]) {
+    return false;
+  }
+
+  var branch = tree.branches[branchName];
+  var queue = [branch.target];
+  var data = {};
+  while (queue.length) {
+    var commitRef = queue.pop();
+    console.log(commitRef);
+    data[this.getBaseRef(commitRef)] = this.getNumHashes(commitRef);
+
+    queue = queue.concat(tree.commits[commitRef].parents);
+  }
+
+  console.log('data is', data);
+  var result = true;
+  _.each(asserts, function(assert) {
+    try {
+      result = result && assert(data);
+    } catch (err) {
+      console.err(err);
+      result = false;
+    }
+  });
+
+  return result;
+};
+
+TreeCompare.prototype.getNumHashes = function(ref) {
+  var regexMap = [
+    [/^C(\d+)([']{0,3})$/, function(bits) {
+      if (!bits[2]) {
+        return 0;
+      }
+      return bits[2].length;
+    }],
+    [/^C(\d+)['][\^](\d+)$/, function(bits) {
+      return Number(bits[2]);
+    }]
+  ];
+
+  for (var i = 0; i < regexMap.length; i++) {
+    var regex = regexMap[i][0];
+    var func = regexMap[i][1];
+    var results = regex.exec(ref);
+    if (results) {
+      return func(results);
+    }
+  }
+  throw new Error('coudlnt parse ref ' + ref);
+};
+
 TreeCompare.prototype.getBaseRef = function(ref) {
   var idRegex = /^C(\d+)/;
   var bits = idRegex.exec(ref);
@@ -10352,11 +9226,15 @@ TreeCompare.prototype.getRecurseCompareHashAgnostic = function(treeA, treeB) {
 
   // some buildup functions
   var getStrippedCommitCopy = _.bind(function(commit) {
+    if (!commit) { return {}; }
     return _.extend(
       {},
       commit,
-      {id: this.getBaseRef(commit.id)
-    });
+      {
+        id: this.getBaseRef(commit.id),
+        parents: null
+      }
+    );
   }, this);
 
   var isEqual = function(commitA, commitB) {
@@ -10383,8 +9261,9 @@ TreeCompare.prototype.getRecurseCompare = function(treeA, treeB, options) {
     // we loop through each parent ID. we sort the parent ID's beforehand
     // so the index lookup is valid. for merge commits this will duplicate some of the
     // checking (because we aren't doing graph search) but it's not a huge deal
-    var allParents = _.unique(commitA.parents.concat(commitB.parents));
-    _.each(allParents, function(pAid, index) {
+    var maxNumParents = Math.max(commitA.parents.length, commitB.parents.length);
+    _.each(_.range(maxNumParents), function(index) {
+      var pAid = commitA.parents[index];
       var pBid = commitB.parents[index];
 
       // if treeA or treeB doesn't have this parent,
@@ -11203,6 +10082,185 @@ var LevelToolbar = BaseView.extend({
   }
 });
 
+var HelperBar = BaseView.extend({
+  tagName: 'div',
+  className: 'helperBar transitionAll',
+  template: _.template($('#helper-bar-template').html()),
+  events: {
+    'click a': 'onClick'
+  },
+
+  onClick: function(ev) {
+    var target = ev.target;
+    var id = $(target).attr('data-id');
+    var funcName = 'on' + id[0].toUpperCase() + id.slice(1) + 'Click';
+    this[funcName].call(this);
+  },
+
+  show: function() {
+    this.$el.toggleClass('show', true);
+  },
+
+  hide: function() {
+    this.$el.toggleClass('show', false);
+    if (this.deferred) {
+      this.deferred.resolve();
+    }
+  },
+
+  getItems: function() {
+    return [];
+  },
+
+  setupChildren: function() {
+  },
+
+  fireCommand: function(command) {
+    Main.getEventBaton().trigger('commandSubmitted', command);
+  },
+
+  showDeferMe: function(otherBar) {
+    this.hide();
+
+    var whenClosed = Q.defer();
+    otherBar.deferred = whenClosed;
+    whenClosed.promise.then(_.bind(function() {
+      this.show();
+    }, this));
+    otherBar.show();
+  },
+
+  onExitClick: function() {
+    this.hide();
+  },
+
+  initialize: function(options) {
+    options = options || {};
+    this.destination = $('body');
+
+    this.JSON = {
+      items: this.getItems()
+    };
+    this.render();
+    this.setupChildren();
+
+    if (!options.wait) {
+      this.show();
+    }
+  }
+});
+
+var IntlHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      text: 'Git Branching',
+      id: 'english'
+    }, {
+      text: '日本語版リポジトリ',
+      id: 'japanese'
+    }, {
+      text: 'Git 브랜치 배우기',
+      id: 'korean'
+    }, {
+      text: '学习Git分支',
+      id: 'chinese'
+    }, {
+      text: 'Français(e)',
+      id: 'french'
+    }, {
+      icon: 'signout',
+      id: 'exit'
+    }];
+  },
+
+  onJapaneseClick: function() {
+    this.fireCommand('locale ja; levels');
+    this.hide();
+  },
+
+  onEnglishClick: function() {
+    this.fireCommand('locale en_US; levels');
+    this.hide();
+  },
+
+  onKoreanClick: function() {
+    this.fireCommand('locale ko; levels');
+    this.hide();
+  },
+
+  onFrenchClick: function() {
+    this.fireCommand('locale fr_FR; levels');
+    this.hide();
+  },
+
+  onChineseClick: function() {
+    this.fireCommand('locale zh_CN; levels');
+    this.hide();
+  }
+});
+
+var CommandsHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      text: 'Levels',
+      id: 'levels'
+    }, {
+      text: 'Reset',
+      id: 'reset'
+    }, {
+      text: 'Undo',
+      id: 'undo'
+    }, {
+      text: 'Help',
+      id: 'help'
+    }, {
+      icon: 'signout',
+      id: 'exit'
+    }];
+  },
+
+  onLevelsClick: function() {
+    this.fireCommand('levels');
+  },
+
+  onResetClick: function() {
+    this.fireCommand('reset');
+  },
+
+  onUndoClick: function() {
+    this.fireCommand('undo');
+  },
+
+  onHelpClick: function() {
+    this.fireCommand('help general; git help');
+  }
+});
+
+var MainHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      icon: 'question-sign',
+      id: 'commands'
+    }, {
+      icon: 'globe',
+      id: 'intl'
+    }];
+  },
+
+  onIntlClick: function() {
+    this.showDeferMe(this.intlHelper);
+  },
+
+  onCommandsClick: function() {
+    this.showDeferMe(this.commandsHelper);
+  },
+
+  setupChildren: function() {
+    this.commandsHelper = new CommandsHelperBar({ wait: true });
+    this.intlHelper = new IntlHelperBar({ wait: true});
+  }
+});
+
 var CanvasTerminalHolder = BaseView.extend({
   tagName: 'div',
   className: 'canvasTerminalHolder box flex1',
@@ -11270,6 +10328,8 @@ exports.LeftRightView = LeftRightView;
 exports.ZoomAlertWindow = ZoomAlertWindow;
 exports.ConfirmCancelTerminal = ConfirmCancelTerminal;
 exports.WindowSizeAlertWindow = WindowSizeAlertWindow;
+
+exports.MainHelperBar = MainHelperBar;
 
 exports.CanvasTerminalHolder = CanvasTerminalHolder;
 exports.LevelToolbar = LevelToolbar;
@@ -13519,6 +12579,17 @@ require.define("/src/js/dialogs/nextLevel.js",function(require,module,exports,__
       ]
     }
   }],
+  'ja': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 完成!',
+        '',
+        'あなたは*{numCommands}*回のコマンドでこの課題をクリアしました; ',
+        '模範解答では{best}回です。'
+      ]
+    }
+  }],
   'zh_CN': [{
     type: 'ModalAlert',
     options: {
@@ -14059,6 +13130,19 @@ var instantCommands = [
       )
     });
   }],
+  [/^show$/, function(bits) {
+    var lines = [
+      intl.str('show-command'),
+      '<br/>',
+      'show commands',
+      'show solution',
+      'show goal'
+    ];
+
+    throw new CommandResult({
+      msg: lines.join('\n')
+    });
+  }],
   [/^locale (\w+)$/, function(bits) {
     constants.GLOBAL.locale = bits[1];
 
@@ -14092,6 +13176,20 @@ var instantCommands = [
     throw new CommandResult({
       msg: msg
     });
+  }],
+  [/^show +commands$/, function(bits) {
+    var allCommands = getAllCommands();
+    var lines = [
+      intl.str('show-all-commands'),
+      '<br/>'
+    ];
+    _.each(allCommands, function(regex, command) {
+      lines.push(command);
+    });
+
+    throw new CommandResult({
+      msg: lines.join('\n')
+    });
   }]
 ];
 
@@ -14111,6 +13209,24 @@ var regexMap = {
   'import tree': /^import +tree$/,
   'import level': /^import +level$/,
   'undo': /^undo($|\s)/
+};
+
+var getAllCommands = function() {
+  var toDelete = [
+    'mobileAlert'
+  ];
+
+  var allCommands = _.extend(
+    {},
+    require('../git/commands').regexMap,
+    require('../level').regexMap,
+    regexMap
+  );
+  _.each(toDelete, function(key) {
+    delete allCommands[key];
+  });
+
+  return allCommands;
 };
 
 exports.instantCommands = instantCommands;
@@ -14192,7 +13308,7 @@ var LevelBuilder = Level.extend({
     };
     LevelBuilder.__super__.initialize.apply(this, [options]);
 
-    this.startDialog = undefined;
+    this.startDialogObj = undefined;
     this.definedGoal = false;
 
     // we wont be using this stuff, and its to delete to ensure we overwrite all functions that
@@ -14235,6 +13351,21 @@ var LevelBuilder = Level.extend({
       'commandSubmitted',
       'echo :D'
     );
+  },
+
+  objectiveDialog: function(command, deferred) {
+    var args = [
+      command,
+      deferred,
+      (this.startDialogObj === undefined) ?
+        null :
+        {
+          startDialog: {
+            'en_US': this.startDialogObj
+          }
+        }
+    ];
+    LevelBuilder.__super__.objectiveDialog.apply(this, args);
   },
 
   initParseWaterfall: function(options) {
@@ -14348,12 +13479,12 @@ var LevelBuilder = Level.extend({
   editDialog: function(command, deferred) {
     var whenDoneEditing = Q.defer();
     this.currentBuilder = new MultiViewBuilder({
-      multiViewJSON: this.startDialog,
+      multiViewJSON: this.startDialogObj,
       deferred: whenDoneEditing
     });
     whenDoneEditing.promise
     .then(_.bind(function(levelObj) {
-      this.startDialog = levelObj;
+      this.startDialogObj = levelObj;
     }, this))
     .fail(function() {
       // nothing to do, they dont want to edit it apparently
@@ -14405,7 +13536,7 @@ var LevelBuilder = Level.extend({
       });
     }
 
-    if (this.startDialog === undefined) {
+    if (this.startDialogObj === undefined) {
       var askForStartDeferred = Q.defer();
       chain = chain.then(function() {
         return askForStartDeferred.promise;
@@ -14451,8 +13582,8 @@ var LevelBuilder = Level.extend({
     );
     // the start dialog now is just our help intro thing
     delete compiledLevel.startDialog;
-    if (this.startDialog) {
-      compiledLevel.startDialog = {'en_US': this.startDialog};
+    if (this.startDialogObj) {
+      compiledLevel.startDialog = {'en_US': this.startDialogObj};
     }
     return compiledLevel;
   },
@@ -14483,7 +13614,6 @@ var LevelBuilder = Level.extend({
 
   die: function() {
     this.hideStart();
-
     LevelBuilder.__super__.die.apply(this, arguments);
 
     delete this.startVis;
@@ -15014,7 +14144,7 @@ var GitDemonstrationView = ContainedBase.extend({
 
   initVis: function() {
     this.mainVis = new Visualization({
-      el: this.$('div.visHolder')[0],
+      el: this.$('div.visHolder div.visHolderInside')[0],
       noKeyboardInput: true,
       noClick: true,
       smallCanvas: true,
@@ -15362,7 +14492,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   addView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var type = $(el).attr('data-type');
 
     var whenDone = Q.defer();
@@ -15385,7 +14515,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   testOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var toTest = this.getChildViews()[index];
     var MultiView = require('../views/multiView').MultiView;
@@ -15402,7 +14532,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   editOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var type = $(el).attr('data-type');
 
@@ -15426,7 +14556,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   deleteOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var toSlice = this.getChildViews();
 
@@ -16123,9 +15253,10 @@ GitVisuals.prototype.maxWidthRecursive = function(commit) {
   return maxWidth;
 };
 
-GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
-  // I always center myself within my bounds
-  var myWidthPos = (min + max) / 2.0;
+GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max, centerFrac) {
+  centerFrac = (centerFrac === undefined) ? 0.5 : centerFrac;
+  // I always position myself within my bounds
+  var myWidthPos = min + (max - min) * centerFrac;
   commit.get('visNode').get('pos').x = myWidthPos;
 
   if (commit.get('children').length === 0) {
@@ -16144,21 +15275,43 @@ GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
     }
   }, this);
 
-  var prevBound = min;
+  // TODO: refactor into another method
+  var getCenterFrac = function(index, centerFrac) {
+    if (myLength < 0.99) {
+      if (children.length < 2) {
+        return centerFrac;
+      } else {
+        return 0.5;
+      }
+    }
+    if (children.length < 2) {
+      return 0.5;
+    }
+    // we introduce a VERY specific rule here, to push out
+    // the first "divergence" of the graph
+    if (index === 0) {
+      return 1/3;
+    } else if (index === children.length - 1) {
+      return 2/3;
+    }
+    return centerFrac;
+  };
 
-  // now go through and do everything
-  // TODO: order so the max width children are in the middle!!
-  _.each(children, function(child) {
+  var prevBound = min;
+  _.each(children, function(child, index) {
     if (!child.isMainParent(commit)) {
       return;
     }
 
     var flex = child.get('visNode').getMaxWidthScaled();
     var portion = (flex / totalFlex) * myLength;
+    var thisCenterFrac = getCenterFrac(index, centerFrac);
+
     var childMin = prevBound;
     var childMax = childMin + portion;
-    this.assignBoundsRecursive(child, childMin, childMax);
-    prevBound = childMax;
+
+    this.assignBoundsRecursive(child, childMin, childMax, thisCenterFrac);
+    prevBound = childMin + portion;
   }, this);
 };
 
@@ -16290,7 +15443,7 @@ GitVisuals.prototype.genResizeFunc = function() {
     _.bind(function(width, height) {
 
       // refresh when we are ready if we are animating som ething
-      if (GLOBAL.isAnimating) {
+      if (false && GLOBAL.isAnimating) {
         var Main = require('../app');
         Main.getEventBaton().trigger('commandSubmitted', 'refresh');
       } else {
@@ -17005,14 +16158,32 @@ var VisBranch = VisBase.extend({
     var commit = this.gitEngine.getCommitFromRef(this.get('branch'));
     var visNode = commit.get('visNode');
 
-    var threshold = this.get('gitVisuals').getFlipPos();
-    // somewhat tricky flip management here
-    if (visNode.get('pos').x > threshold || this.get('isHead')) {
-      this.set('flip', -1);
-    } else {
-      this.set('flip', 1);
-    }
+    this.set('flip', this.getFlipBool(commit, visNode));
     return visNode.getScreenCoords();
+  },
+
+  getFlipBool: function(commit, visNode) {
+    var threshold = this.get('gitVisuals').getFlipPos();
+    var overThreshold = (visNode.get('pos').x > threshold);
+
+    if (!this.get('isHead')) {
+      // easy logic first
+      return (overThreshold) ?
+        -1 :
+        1;
+    }
+    // now for HEAD....
+    if (overThreshold) {
+      // if by ourselves, then feel free to squeeze in. but
+      // if other branches are here, then we need to show separate
+      return (this.isBranchStackEmpty()) ?
+        -1 :
+        1;
+    } else {
+      return (this.isBranchStackEmpty()) ?
+        1 :
+        -1;
+    }
   },
 
   getBranchStackIndex: function() {
@@ -17040,8 +16211,25 @@ var VisBranch = VisBase.extend({
     return this.getBranchStackArray().length;
   },
 
+  isBranchStackEmpty: function() {
+    // useful function for head when computing flip logic
+    var arr = this.gitVisuals.branchStackMap[this.getCommitID()];
+    return (arr) ?
+      arr.length === 0 :
+      true;
+  },
+
+  getCommitID: function() {
+    var target = this.get('branch').get('target');
+    if (target.get('type') === 'branch') {
+      // for HEAD
+      target = target.get('target');
+    }
+    return target.get('id');
+  },
+
   getBranchStackArray: function() {
-    var arr = this.gitVisuals.branchStackMap[this.get('branch').get('target').get('id')];
+    var arr = this.gitVisuals.branchStackMap[this.getCommitID()];
     if (arr === undefined) {
       // this only occurs when we are generating graphics inside of
       // a new Branch instantiation, so we need to force the update
@@ -17610,6 +16798,16 @@ require.define("/src/js/dialogs/confirmShowSolution.js",function(require,module,
         'I believe in you! You can do it'
       ]
     }
+  }],
+  'zh_CN': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 确定要看答案吗？',
+        '',
+        '哥相信你！你可以的'
+      ]
+    }
   }]
 };
 
@@ -17787,22 +16985,28 @@ require.define("/src/levels/index.js",function(require,module,exports,__dirname,
 // a sequence proceed in the order listed here
 exports.levelSequences = {
   intro: [
-    require('../../levels/intro/1').level,
-    require('../../levels/intro/2').level,
-    require('../../levels/intro/3').level,
-    require('../../levels/intro/4').level
+    require('../../levels/intro/commits').level,
+    require('../../levels/intro/branching').level,
+    require('../../levels/intro/merging').level,
+    require('../../levels/intro/rebasing').level
   ],
   rampup: [
-    require('../../levels/rampup/2').level
+    require('../../levels/rampup/detachedHead').level,
+    require('../../levels/rampup/relativeRefs').level,
+    require('../../levels/rampup/relativeRefs2').level,
+    require('../../levels/rampup/reversingChanges').level
   ],
   rebase: [
-    require('../../levels/rebase/1').level,
-    require('../../levels/rebase/2').level
+    require('../../levels/rebase/manyRebases').level,
+    require('../../levels/rebase/selectiveRebase').level
   ],
   mixed: [
-    require('../../levels/mixed/1').level,
-    require('../../levels/mixed/2').level,
-    require('../../levels/mixed/3').level
+    require('../../levels/mixed/grabbingOneCommit').level,
+    require('../../levels/mixed/jugglingCommits').level,
+    require('../../levels/mixed/jugglingCommits2').level
+  ],
+  advanced: [
+    require('../../levels/advanced/multipleParents').level
   ]
 };
 
@@ -17811,12 +17015,14 @@ exports.sequenceInfo = {
   intro: {
     displayName: {
       'en_US': 'まずはここから',
+      'ja': 'まずはここから',
       'fr_FR': 'Sequence d\'introduction',
       'zh_CN': '简介序列',
       'ko': '기본 명령어'
     },
     about: {
       'en_US': 'gitの基本的なコマンド群をほどよいペースで学ぶ',
+      'ja': 'gitの基本的なコマンド群をほどよいペースで学ぶ',
       'fr_FR': 'Une introduction en douceur à la majoité des commandes git',
       'zh_CN': '一个节奏感良好的主流 Git 命令介绍',
       'ko': '브랜치 관련 주요 git 명령어를 깔끔하게 알려드립니다'
@@ -17824,21 +17030,25 @@ exports.sequenceInfo = {
   },
   rampup: {
     displayName: {
-      'en_US': '次のレベルに進もう'
+      'en_US': '次のレベルに進もう',
+      'ja': '次のレベルに進もう'
     },
     about: {
-      'en_US': '更にgitの素晴らしさを堪能しよう'
+      'en_US': '更にgitの素晴らしさを堪能しよう',
+      'ja': '更にgitの素晴らしさを堪能しよう'
     }
   },
   rebase: {
     displayName: {
       'en_US': 'Rebaseをモノにする',
+      'ja': 'Rebaseをモノにする',
       'fr_FR': 'Maîtrise Rebase, Luke!',
       'zh_CN': '掌握衍合，兄弟！',
       'ko': '리베이스 완전정복!'
     },
     about: {
       'en_US': '話題のrebaseってどんなものだろう？って人にオススメ',
+      'ja': '話題のrebaseってどんなものだろう？って人にオススメ',
       'fr_FR': 'Que\'est-ce que c\'est que ce rebase dont tout le monde parle ? Découvrez-le !',
       'ko': '그 좋다고들 말하는 rebase에 대해 알아봅시다!',
       'zh_CN': '大家说的火热的衍合都是些神马？看看吧！'
@@ -17847,15 +17057,25 @@ exports.sequenceInfo = {
   mixed: {
     displayName: {
       'en_US': '様々なtips',
+      'ja': '様々なtips',
       'fr_FR': 'Un assortiment',
       'ko': '종합선물세트',
       'zh_CN': '大杂烩？'
     },
     about: {
       'en_US': 'gitを使う上での様々なtipsやテクニックなど',
+      'ja': 'gitを使う上での様々なtipsやテクニックなど',
       'fr_FR': 'Un assortiment de techniques et astuces pour utiliser Git',
       'ko': 'Git을 다루는 다양한 팁과 테크닉을 다양하게 알아봅니다',
       'zh_CN': 'Git技术，技巧与贴士'
+    }
+  },
+  advanced: {
+    displayName: {
+      'en_US': '応用編'
+    },
+    about: {
+      'en_US': '真の勇者へ捧げる！'
     }
   }
 };
@@ -17863,10 +17083,11 @@ exports.sequenceInfo = {
 
 });
 
-require.define("/levels/intro/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/intro/commits.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "name": {
     "en_US": "Gitのコミット",
     "fr_FR": "Introduction aux commits avec Git",
+    "ja": "Gitのコミット",
     'ko': 'Git 커밋 소개',
     'zh_CN': '介绍Git提交'
   },
@@ -17877,6 +17098,7 @@ require.define("/levels/intro/1.js",function(require,module,exports,__dirname,__
     "en_US": "'git commit'コマンドを2回打てば完成!",
     "fr_FR": "Il suffit de saisir 'git commit' deux fois pour réussir !",
     "zh_CN": "敲两次 'git commit' 就好啦！",
+    "ja": "'git commit'コマンドを2回打てば完成!",
     "ko": "'git commit'이라고 두 번 치세요!"
   },
   "disabledMap": {
@@ -17897,6 +17119,52 @@ require.define("/levels/intro/1.js",function(require,module,exports,__dirname,__
               "リポジトリをcloneする時には、内部動作としてはコミットの差分をたどって全ての変更を取得しています。cloneした時に以下のような表示が出るのは：",
               "",
               "`resolving deltas`（訳：差分を解決中）",
+              "",
+              "このためです。",
+              "",
+              "もっと説明したいところですが、しばらくはコミットをスナップショットのようなものだと考えてください。コミットは非常に軽量であり、コミット間の移動も非常に高速です。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "これがどういうことか、動きを見ていきましょう。図には（小さな）gitリポジトリが描かれています。コミットが2つあります ― `C0`という名前の初回のコミットがあり、`C1`という名前の次のコミットが続きます。これは何か意味のある変更かもしれません。",
+              "",
+              "下のボタンを押下して新しいコミットを作ってみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できました! 良いですね。いまリポジトリに新しい変更が加えられ、1つのコミットとして保存されました。作成したコミットには親がいて、このコミットの出発点となった`C1`を指しています。"
+            ],
+            "command": "git commit",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "実際に手を動かしてみましょう。このウィンドウを閉じたら、試しに2回コミットをしてみましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのコミット",
+              "コミットによって、ディレクトリ中の全てのファイルのスナップショットを記録します。巨大なコピー＆ペーストのようなものですが、実はそれよりずっと良いものです。",
+              "",
+              "Gitではコミットを可能な限り軽量に保つために、コミット毎にフォルダ全体をコピーしません。実際にはGitは、コミットを直前のバージョンから一つ先のバージョンへの「変更の固まり」あるいは「差分」として記録します。後で出てきますが、ほとんどのコミットが親を持っているのはそういう理由からです。",
+              "",
+              "リポジトリをcloneする時には、内部動作としてはコミットの差分をたどって全ての変更を取得しています。cloneした時に以下のような表示が出るのは：",
+              "",
+              "`resolving deltas`（訳：差分を解決中）（訳：差分を解決中）",
               "",
               "このためです。",
               "",
@@ -18068,17 +17336,19 @@ require.define("/levels/intro/1.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/intro/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/intro/branching.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C1\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"}},\"HEAD\":{\"target\":\"bugFix\",\"id\":\"HEAD\"}}",
   "solutionCommand": "git branch bugFix;git checkout bugFix",
   "name": {
     "en_US": "Branching in Git",
+    "ja": "Gitのブランチ",
     "ko": "Git에서 브랜치 쓰기",
     "fr_FR": "Gérer les branches avec Git",
     "zh_CN": "Git开分支"
   },
   "hint": {
     "en_US": "ブランチの作成（\"git branch [ブランチ名]\"）と、チェックアウト（\"git checkout [ブランチ名]\"）",
+    "ja": "ブランチの作成（\"git branch [ブランチ名]\"）と、チェックアウト（\"git checkout [ブランチ名]\"）",
     "fr_FR": "Faites une nouvelle branche avec \"git branch [nom]\" positionnez-vous dans celle-ci avec \"git checkout [nom]\"",
     "zh_CN": "用 'git branch [新分支名字]' 来创建新分支，并用 'git checkout [新分支]' 切换到新分支",
     "ko": "\"git branch [브랜치명]\"으로 새 브랜치를 만들고, \"git checkout [브랜치명]\"로 그 브랜치로 이동하세요"
@@ -18088,6 +17358,84 @@ require.define("/levels/intro/2.js",function(require,module,exports,__dirname,__
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのブランチ",
+              "",
+              "Gitではコミットだけでなく、ブランチもまた信じられないほど軽量です。ブランチとは単に特定のコミットを指示したポインタにしか過ぎません。Gitの達人は決まってこう言うのは、そのためです：",
+              "",
+              "```",
+              "早めに、かつ頻繁にブランチを切りなさい",
+              "```",
+              "",
+              "どれほど多くのブランチを作ってもストレージやメモリを全然使わないので、ブランチを肥大化させるよりも論理的に分割していく方が簡単なのです。",
+              "",
+              "ブランチとコミットをあわせて使い始めると、これら2つのフィーチャがどのように連動して機能するかがわかるでしょう。ここではとりあえず、ブランチは基本的には「あるコミットとその親のコミットたちを含めた全てのコミット」のことを呼ぶと覚えておいてください。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "では実際にブランチがどのようなものかを見ていきましょう。",
+              "",
+              "`newImage`という名前の新しいブランチを切ってみることにします。"
+            ],
+            "afterMarkdowns": [
+              "以上。必要な手順はこれだけです。いま作成された`newImage`ブランチは`C1`コミットを指しています。"
+            ],
+            "command": "git branch newImage",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "この新しいブランチに何か変更を加えてみましょう。次のボタンを押してください。"
+            ],
+            "afterMarkdowns": [
+              "あれ？`newImage`ではなくて`master`ブランチが移動してしまいました。これは、私たちが`newImage`のブランチ上で作業していなかったためです。どのブランチで作業しているかは、アスタリスク(*)がついてるかどうかで分かります。"
+            ],
+            "command": "git commit",
+            "beforeCommand": "git branch newImage"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "今度は作業したいブランチ名をgitに伝えてみましょう。",
+              "",
+              "```",
+              "git checkout [ブランチ名]",
+              "```",
+              "",
+              "このようにして、コミットする前に新しいブランチへと作業ブランチを移動することができます。"
+            ],
+            "afterMarkdowns": [
+              "できましたね。今度は新しいブランチに対して変更を記録することができました。"
+            ],
+            "command": "git checkout newImage; git commit",
+            "beforeCommand": "git branch newImage"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "OK! もうどんなブランチでも切れますね。このウィンドウを閉じて、",
+              "`bugFix`という名前のブランチを作成し、そのブランチをチェックアウトしてみましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -18404,17 +17752,19 @@ require.define("/levels/intro/2.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/intro/3.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C2\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\",\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+require.define("/levels/intro/merging.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C2\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\",\"C2\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "solutionCommand": "git checkout -b bugFix;git commit;git checkout master;git commit;git merge bugFix",
   "name": {
     "en_US": "Merging in Git",
     "fr_FR": "Faire des 'merge' (fusions de branches) avec Git",
     "ko": "Git에서 브랜치 합치기(Merge)",
+    "ja": "ブランチとマージ",
     "zh_CN": "Git合并(Merge)"
   },
   "hint": {
     "en_US": "指示された順番でコミットすること（masterの前にbugFixで）",
+    "ja": "指示された順番でコミットすること（masterの前にbugFixで）",
     "fr_FR": "Pensez à faire des commits dans l'ordre indiqué (bugFix avant master)",
     "zh_CN": "记得按照给定的顺序来进行提交(commit) （bugFix 要在 master 之前）",
     "ko": "말씀드린 순서대로 커밋해주세요 (bugFix에 먼저 커밋하고 master에 커밋)"
@@ -18482,6 +17832,75 @@ require.define("/levels/intro/3.js",function(require,module,exports,__dirname,__
               "* `bugFix`という名前で新しいブランチを切る",
               "* `git checkout bugFix`コマンドで`bugFix`ブランチをチェックアウトする",
               "* 一回だけコミットする",
+              "* `git checkout`で`master`へ戻る",
+              "* もう1回コミットする",
+              "* `git merge`コマンドを使って、`bugFix`ブランチを`master`ブランチへとマージする",
+              "",
+              "*注：\"help level\"コマンドでこのヘルプにいつでも戻ってこれます*"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ブランチとマージ",
+              "",
+              "いい調子ですね。これまでにコミットとブランチについて学びました。そろそろ2つのブランチを1つにまとめるやり方について見ていきましょう。これができれば新しいフィーチャの開発のために新しいブランチを切って、開発が終わったら変更を元のブランチへ統合することができるようになります。",
+              "",
+              "はじめに紹介するのは、`git merge`を使ったマージのやり方です。mergeコマンドによって、2つの独立した親を持つ特別なコミットを作ることができます。2つの親を持つコミットが持つ意味とは、「全く別々の場所にいるこの親とその親（*かつ*、それらの親の祖先全て）が持つ全ての変更を含んでいますよ」ということです。",
+              "",
+              "見てみた方が早いので、次の画面で確認してみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "それぞれ別のコミットを指している2つのブランチがあります。変更が別々のブランチに分散していて統合されていないケースです。これをマージで1つにまとめてみましょう。",
+              "",
+              "`bugFix`ブランチを`master`ブランチにマージしてみます。"
+            ],
+            "afterMarkdowns": [
+              "わあ。見ましたか？まず初めに、`master`ブランチが2つのコミットを親に持つ新しいコミットを指してますね。`master`から親をたどっていくと、最も古いコミットにたどり着くまでに全てのコミットを含んでいる様が確認できます。これで、全ての変更を含む`master`が完成しました。",
+              "",
+              "色がどう変わったかにも注目して下さい。学習を助けるために、ブランチ毎に色をつけています。それぞれのブランチは自分の色を持っていて、どのブランチから派生して出てくるか次第でコミットごとの色が決まります。",
+              "",
+              "今回のコミットには`master`ブランチの色が使われました。しかし`bugFix`ブランチの色がまだ変わってないようなので、これを変えてみましょう。"
+            ],
+            "command": "git merge bugFix",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "`master`ブランチを`bugFix`ブランチにマージしてみます。"
+            ],
+            "afterMarkdowns": [
+              "`bugFix`ブランチは`master`ブランチの派生元だったので、gitは実際大したことはしていません：`bugFix`ブランチを指していたポインタを`master`が指していたコミットへと移動させただけです。",
+              "",
+              "これで全てのコミットが同じ色になりました。つまり、リポジトリの中の全ての変更をそれぞれのブランチが持ったことになります。やったね！"
+            ],
+            "command": "git checkout bugFix; git merge master",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit; git merge bugFix"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "以下の作業で理解度の確認をしてみましょう。 steps:",
+              "",
+              "* `bugFix`という名前で新しいブランチを切る",
+              "* `git checkout bugFix`コマンドで`bugFix`ブランチをチェックアウトする",
+              "* 一回だけコミット",
               "* `git checkout`で`master`へ戻る",
               "* もう1回コミットする",
               "* `git merge`コマンドを使って、`bugFix`ブランチを`master`ブランチへとマージする",
@@ -18704,17 +18123,19 @@ require.define("/levels/intro/3.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/intro/4.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/intro/rebasing.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%22%2C%22id%22%3A%22master%22%7D%2C%22bugFix%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22bugFix%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C3%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22bugFix%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git checkout -b bugFix;git commit;git checkout master;git commit;git checkout bugFix;git rebase master",
   "name": {
     "en_US": "Rebaseの解説",
+    "ja": "Rebaseの解説",
     "fr_FR": "Introduction à rebase",
     "ko": "리베이스(rebase)의 기본",
     "zh_CN": "介绍衍合(rebase)"
   },
   "hint": {
     "en_US": "初めにbugFixを指した状態でコミットする",
+    "ja": "初めにbugFixを指した状態でコミットする",
     "fr_FR": "Assurez-vous de bien faire votre en premier votre commit sur bugFix",
     "ko": "bugFix 브랜치에서 먼저 커밋하세요",
     "zh_CN": "确保你先在 bugFix 分支进行提交"
@@ -18781,6 +18202,73 @@ require.define("/levels/intro/4.js",function(require,module,exports,__dirname,__
               "",
               "* `bugFix`という名前の新しいブランチをチェックアウトする",
               "* 一回だけコミットする",
+              "* masterブランチに戻ってもう1回コミット",
+              "* bugFixをもう1回チェックアウトして、master上にリベース",
+              "",
+              "幸運を祈る！"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Git Rebase",
+              "",
+              "ブランチを一つにまとめる方法として前回はマージを紹介しましたが、今回紹介するリベースを使うこともできます。リベースの動作は、マージするコミットのコピーをとって、どこかにストンと落とすというイメージです。",
+              "",
+              "ピンと来ないかもしれませんが、リベースのメリットは一本の連続したシーケンシャルなコミットに整形できることです。リベースだけ使っていると、コミットのログや履歴が非常にクリーンな状態に保たれます。",
+              "",
+              "早速実際にどう動くのかを見てみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "前回と同様の2つのブランチを考えます：仮にいまbugFixブランチをチェックアウトしているとします。（アスタリスクつきのもの）",
+              "",
+              "bugFixに入ってる作業内容をそのまま直接masterブランチ上の内容に移動したいとします。こうすることで、実際には並行して開発された2つの別々のブランチ上のフィーチャを、あたかも1本のブランチ上でシーケンシャルに開発されていたかのように見せることができます。",
+              "",
+              "`git rebase`コマンドでそれをやってみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できた！これでbugFixブランチの作業内容はmasterブランチのすぐ先に移動したので、見た目が一本になってスッキリしました。",
+              "",
+              "気を付けてほしいのは、C3コミットはどこかに残ってるということ（ツリーの中で半透明にしてあります）、そしてC3'は（C3との接続が切れているC3の）コピーがmasterブランチ上に作られているということです。",
+              "",
+              "一つ問題が残ってて、masterブランチがまだ最新化されていませんね。ちょっと直してみましょう。。"
+            ],
+            "command": "git rebase master",
+            "beforeCommand": "git commit; git checkout -b bugFix C1; git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "masterブランチはチェックアウトしてあります。この状態からmasterブランチを`bugFix`へとリベースしてみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できた！`master`は`bugFix`の直前のコミットだったので、gitは単純に`master`ブランチのポインタを前に進めただけでした。"
+            ],
+            "command": "git rebase bugFix",
+            "beforeCommand": "git commit; git checkout -b bugFix C1; git commit; git rebase master; git checkout master"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "以下の作業で理解度の確認をしてみましょう。",
+              "",
+              "* `bugFix`という名前の新しいブランチをチェックアウトする",
+              "* 一回だけコミット",
               "* masterブランチに戻ってもう1回コミット",
               "* bugFixをもう1回チェックアウトして、master上にリベース",
               "",
@@ -18994,24 +18482,342 @@ require.define("/levels/intro/4.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/rampup/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22master%22%7D%2C%22pushed%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22pushed%22%7D%2C%22local%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22local%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22pushed%22%2C%22id%22%3A%22HEAD%22%7D%7D",
-  "solutionCommand": "git reset HEAD~1;git checkout pushed;git revert HEAD",
-  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"pushed\":{\"target\":\"C2\",\"id\":\"pushed\"},\"local\":{\"target\":\"C3\",\"id\":\"local\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"local\",\"id\":\"HEAD\"}}",
+require.define("/levels/rampup/detachedHead.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"C4\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git checkout C4",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
-    "en_US": "変更を元に戻す",
-    "fr_FR": "Annuler des changements avec Git",
-    "ko": "Git에서 작업 되돌리기",
-    "zh_CN": "Git撤销改变"
+    "en_US": "HEADを理解する"
   },
   "hint": {
-    "en_US": "",
-    "fr_FR": "",
-    "zh_CN": "",
-    "ko": ""
+    "en_US": "ラベル(ハッシュ)を使いましょう"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitの基礎固め",
+              "",
+              "Gitの先進的なフィーチャについて学ぶ前に、ツリーの中を自在に移動できるようになっておくと便利です。",
+              "",
+              "ひとたび自在に動き回れるようになれば、これから学ぶ他のgitコマンドの威力が倍増するでしょう。",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## HEAD",
+              "",
+              "まず\"HEAD\"についてお話します。HEADはいまチェックアウトされているコミットを指す時の呼び方です -- これはあなたが今どのコミットで作業しているかを意味します。",
+              "",
+              "HEADは常にツリー上の最後のコミットを指しています。ツリーに変化をもたらすほとんどのgitコマンドは、このHEADを動かすことからその動作を始めます。",
+              "",
+              "通常HEADは（bugFixといったような）ブランチ名を指しています。あなたがコミットすると、このbugFixブランチの状態が変化しますが、HEADはこの変化を指すように動きます。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "動きを確認してみましょう。コミットする前とした後の都合2回、HEADを出現させます。"
+            ],
+            "afterMarkdowns": [
+              "わかりましたか？`master`ブランチの下にずっとHEADが隠れていました。"
+            ],
+            "command": "git checkout C1; git checkout master; git commit; git checkout C2",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "### HEADを出現させる",
+              "",
+              "HEADの向き先をブランチではなくてコミットに変えることで、HEADを出現させることができます。前はこうだったのを：",
+              "",
+              "HEAD -> master -> C1",
+              ""
+            ],
+            "afterMarkdowns": [
+              "こう変えてやります。",
+              "",
+              "HEAD -> C1"
+            ],
+            "command": "git checkout C1",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "このレベルの仕上げに、HEADの向き先を`bugFix`からコミットに変えてみて、理解を確認してみましょう。",
+              "",
+              "向き先を変えるには、コミットのハッシュを指定します。learn Git Branchingでは簡便のためにハッシュをCで始まる文字列で表現しています。"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+
+require.define("/levels/rampup/relativeRefs.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"C3\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git checkout bugFix^",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "name": {
+    "en_US": "コミットの相対的な指定 (^)"
+  },
+  "hint": {
+    "en_US": "(^)オペレータを思い出して！"
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## コミットの相対的な指定",
+              "",
+              "実際のGitの運用では、ハッシュ名を指定してツリーを動き回ることは少し骨が折れます。Gitのツリー構造が見事にグラフィカルに表現されるわけではないので、ハッシュを見つけるためには`git log`を叩く必要が出てきます。",
+              "",
+              "更には、ハッシュ名は実際のGitの世界では通常はもっと長い文字列です。例えば、`fed2da64c0efc5293610bdd892f82a58e8cbc5d8`のように。舌が追いつきませんね。。。",
+              "",
+              "幸い、Gitにはハッシュを便利に扱うための機能があります。ハッシュ名の全部を指定する必要はなく、どのハッシュかを特定するに足るだけの文字列を与えればよいのです。つまり前述の長いハッシュの代わりに、`fed2`とタイプします。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "それでもやっぱりハッシュの指定は少し大変なので、相対的な指定の出番です。これは素晴らしいですよ！",
+              "",
+              "相対的な指定では、どこか記憶しやすい場所（`bugFix`ブランチや`HEAD`など）で作業することになります。",
+              "",
+              "コミットの相対的な指定はパワフルな機能ですが、ここではシンプルな2つの方法の紹介に留めます：",
+              "",
+              "* `^`オペレータを使って一回で一つの前のコミットを指定",
+              "* `~<num>`オペレータを使って任意の個数分前のコミットを指定"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "ハット（^）オペレータについて見てましょう。オペレータを追加することで、今指定してるコミットの親コミットを見つけるようGitに指示することができます。",
+              "",
+              "例えば`master^`と書くと`master`の最初の親コミットを指すことができます。",
+              "",
+              "`master^^`とすれば`master`のおじいちゃんコミットを指します。",
+              "",
+              "masterの親コミットをチェックアウトしてみましょう。"
+            ],
+            "afterMarkdowns": [
+              "じゃん！できました。ハッシュ名を打ち込むよりも簡単なことがわかります。"
+            ],
+            "command": "git checkout master^",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "相対的な指定をする際に、`HEAD`を使うこともできます。何回か使ってみて、ツリー内を移動してみましょう。"
+            ],
+            "afterMarkdowns": [
+              "簡単ですね！`HEAD^`と打つことで移動することができました。"
+            ],
+            "command": "git checkout C3; git checkout HEAD^; git checkout HEAD^; git checkout HEAD^",
+            "beforeCommand": "git commit; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "実際に手を動かしてみましょう。`bugFix`の親コミットをチェックアウトします。`HEAD`を出現させるのです。",
+              "",
+              "ハッシュ名の指定でも同じことができますが、相対的な指定の方を試してみましょう！"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+
+require.define("/levels/rampup/relativeRefs2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C6\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C0\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C3\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"}},\"HEAD\":{\"target\":\"C1\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git branch -f master C6;git checkout HEAD~1;git branch -f bugFix HEAD~1",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C5\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C3\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"}},\"HEAD\":{\"target\":\"C2\",\"id\":\"HEAD\"}}",
+  "hint": {
+    "en_US": "レベルクリアのためには、最低1回はハッシュ名をタイプする必要があります"
+  },
+  "name": {
+    "en_US": "コミットの相対的な指定 2つ目 (~)"
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### \"~\"オペレータ",
+              "",
+              "仮にいくつも前のコミットへと移動する必要があるとします。`^`を何回もタイプするのは骨が折れる場合もありますから、こんな時のためにGitにはチルダ(~)オペレータがあります。",
+              "",
+              "",
+              "チルダの後に移動したい数を入力して使います。これも動きをみてみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "チルダの後ろに数字をつけてコミットを指定しています。"
+            ],
+            "afterMarkdowns": [
+              "じゃん！これはシンプル -- 相対的な指定は素晴らしいですね。"
+            ],
+            "command": "git checkout HEAD~4",
+            "beforeCommand": "git commit; git commit; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### Branch forcing",
+              "",
+              "これであなたも相対的な指定の達人です。実践に入りましょう。",
+              "",
+              "私が相対的な指定を最も活用する時は、ブランチを動かす時です。（git branchコマンドの）`-f`オプションを使えば、ブランチ名を直接あるコミットへと付け直すことができます。例えば：",
+              "",
+              "`git branch -f master HEAD~3`",
+              "",
+              "こうすれば、masterブランチをHEADから数えて3個前の親コミットへと強制的に移動することができます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "`HEAD`、`master`それから`bugFix`をそれぞれ所定の位置へと移動させて、このレベルをクリアしましょう。"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+
+require.define("/levels/rampup/reversingChanges.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22master%22%7D%2C%22pushed%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22pushed%22%7D%2C%22local%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22local%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22pushed%22%2C%22id%22%3A%22HEAD%22%7D%7D",
+  "solutionCommand": "git reset HEAD~1;git checkout pushed;git revert HEAD",
+  "compareOnlyBranches": true,
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"pushed\":{\"target\":\"C2\",\"id\":\"pushed\"},\"local\":{\"target\":\"C3\",\"id\":\"local\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"local\",\"id\":\"HEAD\"}}",
+  "name": {
+    "en_US": "変更を元に戻す",
+    "ja": "変更を元に戻す",
+    "fr_FR": "Annuler des changements avec Git",
+    "ko": "Git에서 작업 되돌리기",
+    "zh_CN": "Git 里的撤销改变"
+  },
+  "hint": {
+    "en_US": "Notice that revert and reset take different arguments.",
+    "fr_FR": "",
+    "zh_CN": "",
+    "ko": "",
+    "ja": ""
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## 変更を元に戻す",
+              "",
+              "Gitでは変更を元に戻す方法がたくさんあります。コミットと同じように、低レベルな動作（ファイル別だったりファイルの中の一部だったり）も高レベルな動作（変更のまとまりのキャンセル）もできます。このアプリケーションでは後者の方法について紹介します。",
+              "",
+              "基本的なアンドゥの方法が2つあります - 一つは`git reset`を使う方法で、もう1つは`git revert`を使う方法です。次のダイアログで一つ一つを見ていきます。",
+              ""
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "## Git Reset",
+              "",
+              "`git reset`はブランチのポインタを後方に移動することで変更のキャンセルを実現します。履歴を上書きするような動作だと思うと良いでしょうか：`git reset`はそもそも前のコミットなんかなかったかのように、ブランチのポインタを元に戻してくれます。",
+              "",
+              "どういう感じか見てみましょう。"
+            ],
+            "afterMarkdowns": [
+              "いいですね！Gitは単純にmasterブランチへのポインタを`C1`へ戻しました。これでこのローカルリポジトリにはまるで`C2`なんて無かったかのように変更をキャンセルできました。"
+            ],
+            "command": "git reset HEAD~1",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "## Git Revert",
+              "",
+              "自分のマシン上のブランチではさっきの`git reset`でうまくいきましたが、この「履歴を上書きする」手段は、他の人も使っているリモートにあるリポジトリに対しては使うことができません。",
+              "",
+              "変更を巻き戻して他の人とそれを共有するためには、`git revert`を使う必要があります。今度はこれを見てみましょう。"
+            ],
+            "afterMarkdowns": [
+              "あれ、おかしいな。巻き戻したいと思ってたコミットの下に新しいコミットが出来上がってしまったみたいです。なぜか。これは、この新しい`C2'`コミットは`C2`へ戻すのに必要な内容を確かに変更して巻き戻していたのです。",
+              "",
+              "こんな風にして、巻き戻した内容を他人と共有するためにはrevertを使います。"
+            ],
+            "command": "git revert HEAD",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "この章の仕上げに、`local`と`pushed`の両方の直近のコミットを巻き戻してみましょう。",
+              "",
+              "`pushed`はリモートのブランチで、`local`はローカルであることに注意。正しくコマンドを使い分けましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -19268,7 +19074,7 @@ require.define("/levels/rampup/2.js",function(require,module,exports,__dirname,_
 
 });
 
-require.define("/levels/rebase/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/rebase/manyRebases.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "compareOnlyMasterHashAgnostic": true,
   "disabledMap": {
     "git revert": true
@@ -19277,17 +19083,37 @@ require.define("/levels/rebase/1.js",function(require,module,exports,__dirname,_
   "solutionCommand": "git checkout bugFix;git rebase master;git checkout side;git rebase bugFix;git checkout another;git rebase side;git rebase another master",
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C3\",\"id\":\"bugFix\"},\"side\":{\"target\":\"C6\",\"id\":\"side\"},\"another\":{\"target\":\"C7\",\"id\":\"another\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C0\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C4\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C5\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
-    "ko": "9천번이 넘는 리베이스",
     "en_US": "Rebasing over 9000 times",
+    "ko": "9천번이 넘는 리베이스",
+    "ja": "Rebasing over 9000 times",
     "zh_CN": "衍合一百遍啊一百遍"
   },
   "hint": {
     "en_US": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
+    "ja": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
     "ko": "아마도 master를 마지막에 업데이트하는 것이 가장 효율적인 방법일 것입니다...",
     "zh_CN": "记住，可能最终最高效的方法就是更新主分支（master）……"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### 複数のブランチをリベースする",
+              "",
+              "さあ、いくつものブランチが出てきます。このブランチたち全てをmasterブランチにリベースしましょう。",
+              "",
+              "おエライさん方が今回の仕事を少しトリッキーにしてくれました ― コミットはすべて一列のシーケンシャルな状態にしてほしいそうです。つまり私たちが作るリポジトリの最終的なツリーの状態は、`C7'`が最後に来て、`C6'`がその一つ上に来て、、と順に積み重なるイメージです。",
+              "",
+              "試行錯誤してツリーが汚くなってきたら、`reset`コマンドを使ってツリーの状態を初期化してください。模範解答をチェックして、それよりも簡単なコマンドで済ませられるかどうか、を考えるのも忘れずに！"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -19345,7 +19171,7 @@ require.define("/levels/rebase/1.js",function(require,module,exports,__dirname,_
 };
 });
 
-require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/rebase/selectiveRebase.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "compareAllBranchesHashAgnostic": true,
   "disabledMap": {
     "git revert": true
@@ -19356,15 +19182,37 @@ require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,_
   "name": {
     "ko": "브랜치 스파게티",
     "en_US": "ブランチスパゲッティ",
+    "ja": "ブランチスパゲッティ",
     "zh_CN": "分支浆糊"
   },
   "hint": {
     "en_US": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
+    "ja": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
     "ko": "이 문제를 해결하는 방법은 여러가지가 있습니다! 체리픽(cherry-pick)이 가장 쉽지만 오래걸리는 방법이고, 리베이스(rebase -i)가 빠른 방법입니다",
     "zh_CN": "确保你是按照正确的顺序来操作！先操作分支 `one`, 然后 `two`, 最后才是 `three`"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ブランチスパゲッティ",
+              "",
+              "なんということでしょう。今回のレベルクリアのために、やることがたくさんあります。",
+              "",
+              "いま`master`が指しているコミットの数個前のコミットに、ブランチ`one`、`two`それから`three`があります。何か事情があって、これらの3つのブランチをmasterが指している最新の状態に更新したいケースを考えます。",
+              "",
+              "ブランチ`one`に対しては、順序の変更と`C5`の削除が必要です。`two`では順序の変更のみ、`three`に対しては1回だけコミットすればOKです。",
+              "",
+              "`show solution`コマンドで模範解答を確認できますから、こちらも利用してください。 "
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -19429,8 +19277,15 @@ require.define("/levels/rebase/2.js",function(require,module,exports,__dirname,_
 
 });
 
-require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "compareOnlyMasterHashAgnostic": true,
+require.define("/levels/mixed/grabbingOneCommit.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C4 > data.C1;
+      }
+    ]
+  },
   "disabledMap": {
     "git revert": true
   },
@@ -19440,15 +19295,58 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
   "name": {
     "ko": "딱 한개의 커밋만 가져오기",
     "en_US": "Grabbing Just 1 Commit",
+    "ja": "Grabbing Just 1 Commit",
     "zh_CN": "私藏一个提交"
   },
   "hint": {
     "en_US": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
+    "ja": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
     "ko": "대화식 리베이스(rebase -i)나 or 체리픽(cherry-pick)을 사용하세요",
     "zh_CN": "记住，交互式 rebase 或者 cherry-pick 会很有帮助"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ローカルに積み上がったコミット",
+              "",
+              "実際の開発ではこういうケースがよくあります：「バグの原因調査を試みているがバグの再現性がかなり低い。調査の補助のために、いくつかのデバッグ用の命令やprint文を差し込んでいる。」",
+              "",
+              "これらのデバッグ用のコードはバグ修正用のブランチにコミットされています。そしてついにバグの原因を突き止めて、修正した！やった！",
+              "",
+              "あとは`bugFix`ブランチを`master`ブランチに統合できればOK。そこで単純に`master`をfast-forwardすればよいかというと、それでは`master`ブランチの中にデバッグ用のコードも混入してしまいます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "ここでGitの魔法が力を発揮します。解決のためにはいくつかの方法がありますが、最も素直な解決方法は2つあって：",
+              "",
+              "* `git rebase -i`",
+              "* `git cherry-pick`",
+              "",
+              "インタラクティブモードの（`-i`オプションつきの）rebaseによって、保持したいコミットと破棄したいコミットを選り分けることができます。コミットの順序を変更することも可能です。この方法は、一部の変更をどこかへやってしまいたい時に便利です。",
+              "",
+              "もう一方のcherry-pickを使うと、持っていきたいコミットを選んで`HEAD`の先にストンと落とすことができます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "後半の章ですのでどう解決するかをもう自分で考えることができると思います。このレベルをクリアするためには、`bugFix`が持っているコミットを`master`ブランチが受け取る必要がある点には注意してください。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -19576,27 +19474,80 @@ require.define("/levels/mixed/1.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/mixed/jugglingCommits.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "disabledMap": {
     "git cherry-pick": true,
     "git revert": true
   },
-  "compareOnlyMaster": true,
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C2 > data.C3;
+      },
+      function(data) {
+        return data.C2 > data.C1;
+      }
+    ]
+  },
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%27%27%22%2C%22id%22%3A%22master%22%7D%2C%22newImage%22%3A%7B%22target%22%3A%22C2%22%2C%22id%22%3A%22newImage%22%7D%2C%22caption%22%3A%7B%22target%22%3A%22C3%27%27%22%2C%22id%22%3A%22caption%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C3%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%27%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C3%27%22%5D%2C%22id%22%3A%22C2%27%22%7D%2C%22C2%27%27%22%3A%7B%22parents%22%3A%5B%22C3%27%22%5D%2C%22id%22%3A%22C2%27%27%22%7D%2C%22C2%27%27%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%27%27%22%7D%2C%22C3%27%27%22%3A%7B%22parents%22%3A%5B%22C2%27%27%27%22%5D%2C%22id%22%3A%22C3%27%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22master%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git rebase -i HEAD~2;git commit --amend;git rebase -i HEAD~2;git rebase caption master",
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"newImage\":{\"target\":\"C2\",\"id\":\"newImage\"},\"caption\":{\"target\":\"C3\",\"id\":\"caption\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"caption\",\"id\":\"HEAD\"}}",
   "name": {
     "ko": "커밋들 갖고 놀기",
     "en_US": "Juggling Commits",
+    "ja": "Juggling Commits",
     "zh_CN": "提交变换戏法"
   },
   "hint": {
     "en_US": "最初に打つコマンドはgit rebase -i HEAD~2",
+    "ja": "最初に打つコマンドはgit rebase -i HEAD~2",
     "ko": "첫번째 명령은 git rebase -i HEAD~2 입니다",
     "zh_CN": "第一个命令是 'git rebase -i HEAD~2'"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Commitsをやりくりする",
+              "",
+              "開発中に頻繁に起こるケースをもう1つ考えます。ある変更（`newImage`）とまた別の変更（`caption`）があって、それらに依存関係があるとします。この一連の変更が一列に積み重なっているとします。",
+              "",
+              "ここでトリッキーなのは、以前のコミットに対して微修正をかけなければならないケースがあるということです。今回の教材でも、過去のコミットであるにも関わらず`newImage`ブランチに僅かな修正を加えるような設計の修正が入ったとしましょう。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "この困難な状況を、以下の手順で克服することを考えます：",
+              "",
+              "* `git rebase -i`を使って順番を変更する。これで、変更をかけたいコミットを一番先頭に持ってくる。",
+              "* `commit --amend`コマンドで僅かな変更を行う",
+              "* `git rebase -i`コマンドを再度使って、先頭に持ってきていたコミットを元に戻す",
+              "* 最後に、レベルクリアのためにmasterブランチを先頭に持ってくる",
+              "",
+              "クリアのための方法はいくつもありますが（cherry-pickを使うこともできます）、別の回答はまた後程の章で見ることにして、今回は上記の方法でやってみることにしましょう。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "最後に、ゴール時点での状態に気を付けてください。今回2回ほどコミットを動かしますから、コミットへのポインタにはアポストロフィ（'）が追加されます。commit --amendコマンドの実行でできたコミットには更にもう1つのアポストロフィが追加されます。 ",
+              "",
+              "That being said, I can compare levels now based on structure and relative apostrophe differences. As long as your tree's `master` branch has the same structure and relative apostrophe differences, I'll give full credit"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -19718,21 +19669,33 @@ require.define("/levels/mixed/2.js",function(require,module,exports,__dirname,__
 
 });
 
-require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/levels/mixed/jugglingCommits2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%27%22%2C%22id%22%3A%22master%22%7D%2C%22newImage%22%3A%7B%22target%22%3A%22C2%22%2C%22id%22%3A%22newImage%22%7D%2C%22caption%22%3A%7B%22target%22%3A%22C3%22%2C%22id%22%3A%22caption%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%22%7D%2C%22C2%27%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%27%22%7D%2C%22C3%27%22%3A%7B%22parents%22%3A%5B%22C2%27%27%22%5D%2C%22id%22%3A%22C3%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22master%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git checkout master;git cherry-pick C2;git commit --amend;git cherry-pick C3",
   "disabledMap": {
     "git revert": true
   },
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"newImage\":{\"target\":\"C2\",\"id\":\"newImage\"},\"caption\":{\"target\":\"C3\",\"id\":\"caption\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"caption\",\"id\":\"HEAD\"}}",
-  "compareOnlyMaster": true,
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C2 > data.C3;
+      },
+      function(data) {
+        return data.C2 > data.C1;
+      }
+    ]
+  },
   "name": {
     "ko": "커밋 갖고 놀기 #2",
     "en_US": "コミットをやりくりする その2",
+    "ja": "コミットをやりくりする その2",
     "zh_CN": "提交交换戏法 #2"
   },
   "hint": {
     "en_US": "masterのポインタを先に進めることを忘れずに！",
+    "ja": "masterのポインタを先に進めることを忘れずに！",
     "ko": "master를 변경 완료한 커밋으로 이동(forward)시키는 것을 잊지 마세요!",
     "zh_CN": "别忘记了将 master 快进到最新的更新上！"
   },
@@ -19744,6 +19707,49 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
           "options": {
             "markdowns": [
               "## Commitsをやりくりする #2",
+              "",
+              "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
+              "",
+              "前回見てきたように、コミット順序の変更のために、私たちは`rebase -i`コマンドを利用しました。ツリーの先頭に変更対象のコミットがあれば、--amendオプションを使うことで容易に変更を書きかえて、元の順序に戻すことができます。",
+              "",
+              "この場合に心配なことが一つだけあって、それは複数回の順序の変更が行われるので、rebaseのコンフリクト（衝突）が起こりうることです。こういうケースへの対策として、`git cherry-pick`を使った別の解決法について考えてみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "git cherry-pickを使うと、ツリーの中から複数のコミットを選んで、HEADの下に新しく作ることができましたね。",
+              "",
+              "簡単なデモを見てみましょう："
+            ],
+            "afterMarkdowns": [
+              "できました！次へ進みましょう"
+            ],
+            "command": "git cherry-pick C2",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "このレベルでは、`C2`をamendすることで前回と同じ目的を達成しましょう。但し`rebase -i`は使わずにクリアしてください。どんな方法で進めるかはあなたにおまかせします！:D",
+              "",
+              "Remember, the exact number of apostrophe's (') on the commit are not important, only the relative differences. For example, I will give credit to a tree that matches the goal tree but has one extra apostrophe everywhere"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## コミットをやりくりする その2",
               "",
               "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
               "",
@@ -19862,6 +19868,110 @@ require.define("/levels/mixed/3.js",function(require,module,exports,__dirname,__
     }
   }
 };
+});
+
+require.define("/levels/advanced/multipleParents.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C7\",\"id\":\"master\"},\"bugWork\":{\"target\":\"C2\",\"id\":\"bugWork\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C2\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C4\",\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C6\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git branch bugWork master^^2^",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C7\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C2\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C4\",\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C6\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "name": {
+    "en_US": "Multiple parents"
+  },
+  "hint": {
+    "en_US": "対象のコミット上で`git branch bugWork`と打って足りない部分を補おう"
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### 親を特定する",
+              "",
+              "`~`（チルダ）のように、`^`（キャレット）にも数字を与えることができます。",
+              "",
+              "`~`（チルダ）の時は何世代前にさかのぼるかを指定しましたが、`^`（キャレット）ではどの親にさかのぼるかを指定します。コミットをマージすると複数の親コミットが生まれることを思い出してください。どの親へさかのぼるか、という問題は曖昧なのです。",
+              "",
+              "Gitでは通常はマージの結果生まれたコミットの最初の親へとさかのぼりますが、`^`（キャレット）の後に数字を指定することでこのデフォルト動作を変更することができます。",
+              "",
+              "説明はこれくらいにして、実際の動きを見てみましょう。",
+              ""
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "ここにマージの結果生まれたコミットがあります。仮に数字なしで`master^`を指定すると、最初の親へとさかのぼります。 ",
+              "",
+              "(*このツール上では、「最初の親」はコミットの真上に位置している親のことを指します*)"
+            ],
+            "afterMarkdowns": [
+              "一丁上がり -- この動作は見慣れてますよね。"
+            ],
+            "command": "git checkout master^",
+            "beforeCommand": "git checkout HEAD^; git commit; git checkout master; git merge C2"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "次に第二の親を指定してみましょう。"
+            ],
+            "afterMarkdowns": [
+              "わかりましたか？今度は別の親を指すようになりました。"
+            ],
+            "command": "git checkout master^2",
+            "beforeCommand": "git checkout HEAD^; git commit; git checkout master; git merge C2"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "`^`（キャレット）と`~`（チルダ）に数字を組み合わせて使うことで、非常にパワフルにgitツリー内を動き回ることが可能になります。"
+            ],
+            "afterMarkdowns": [
+              "光の速さ！"
+            ],
+            "command": "git checkout HEAD~; git checkout HEAD^2; git checkout HEAD~2",
+            "beforeCommand": "git commit; git checkout C0; git commit; git commit; git commit; git checkout master; git merge C5; git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "更に極めると、これらの修飾子をつなげて（chained）使うこともできます。見てみましょう；"
+            ],
+            "afterMarkdowns": [
+              "前回と同じ動きですが、一回のコマンドで全てを実現しています。"
+            ],
+            "command": "git checkout HEAD~^2~2",
+            "beforeCommand": "git commit; git checkout C0; git commit; git commit; git commit; git checkout master; git merge C5; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### 実践でやってみる",
+              "",
+              "このレベルの仕上げに、指定された場所へ新しいブランチを作成してみましょう。",
+              "",
+              "`C6`のようにコミットのハッシュを指定する方が簡単なのは自明ですが、ここは敢えて今回学んだ修飾子たちを使って課題に挑戦してみてください。"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+
+
 });
 
 require.define("/src/js/views/levelDropdownView.js",function(require,module,exports,__dirname,__filename,process,global){var _ = require('underscore');
@@ -20123,7 +20233,9 @@ var SeriesView = BaseView.extend({
   className: 'seriesView box flex1 vertical',
   template: _.template($('#series-view').html()),
   events: {
-    'click div.levelIcon': 'click'
+    'click div.levelIcon': 'click',
+    'mouseenter div.levelIcon': 'enterIcon',
+    'mouseleave div.levelIcon': 'leaveIcon'
   },
 
   initialize: function(options) {
@@ -20138,9 +20250,11 @@ var SeriesView = BaseView.extend({
     }, this);
 
     this.destination = options.destination;
+    // use a non-breaking space to prevent the level from bouncing around
+    // from missing strings
     this.JSON = {
       displayName: intl.getIntlKey(this.info, 'displayName'),
-      about: intl.getIntlKey(this.info, 'about'),
+      about: intl.getIntlKey(this.info, 'about') || "&nbsp;",
       ids: this.levelIDs
     };
 
@@ -20157,13 +20271,32 @@ var SeriesView = BaseView.extend({
     });
   },
 
-  click: function(ev) {
-    var element = ev.srcElement || ev.currentTarget;
-    if (!element) {
-      console.warn('wut, no id'); return;
-    }
+  getEventID: function(ev) {
+    var element = ev.target;
+    return $(element).attr('data-id');
+  },
 
-    var id = $(element).attr('data-id');
+  resetAbout: function() {
+    this.$('p.about').text(intl.getIntlKey(this.info, 'about'))
+      .css('font-style', 'inherit');
+  },
+
+  setAbout: function(content) {
+    this.$('p.about').text(content).css('font-style', 'italic');
+  },
+
+  enterIcon: function(ev) {
+    var id = this.getEventID(ev);
+    var level = Main.getLevelArbiter().getLevel(id);
+    this.setAbout(intl.getName(level));
+  },
+
+  leaveIcon: function() {
+    this.resetAbout();
+  },
+
+  click: function(ev) {
+    var id = this.getEventID(ev);
     this.navEvents.trigger('clickedID', id);
   }
 });
@@ -20249,7 +20382,7 @@ var CommandPromptView = Backbone.View.extend({
   },
 
   onKeyDown: function(e) {
-    var el = e.srcElement || e.currentTarget;
+    var el = e.target;
     this.updatePrompt(el);
   },
 
@@ -20632,6 +20765,62 @@ require.define("/src/js/dialogs/sandbox.js",function(require,module,exports,__di
         '',
         'このダイアログ自体を省略するには、以下のようにURLの末尾にクエリストリング`?NODEMO`を付加してアクセスしてください。',
         '',
+        '[http://pcottle.github.com/learnGitBranching/?NODEMO](?NODEMO)'
+      ]
+    }
+  }, {
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## ここで学べるGitのオペレーション',
+        '',
+        'ここでは、下記の種類のgitコマンドを学ぶことができます。',
+        '',
+        ' * commit',
+        ' * branch',
+        ' * checkout',
+        ' * cherry-pick',
+        ' * reset',
+        ' * revert',
+        ' * rebase',
+        ' * merge'
+      ]
+    }
+  }, {
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 学習した内容を共有できます',
+        '',
+        '画面左のコマンドプロンプトから`export tree`や`import tree`とタイプすることで、gitのツリー構造を友達に送ることができます',
+        '',
+        '何か教材になるようなケースはご存知ないでしょうか。`build level`で課題を作成したり、`import level`で他の人の課題に挑戦してみてください。',
+        '',
+        'To see the full range of commands, try `show commands`. There are some gems like `undo` and `reset`',
+        '',
+        'それでは教材の選択画面に進んでみることにします。'
+      ]
+    }
+  }],
+  'ja': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## LearnGitBranchingへようこそ',
+        '',
+        'gitのパワフルなブランチ機能のコンセプトが ',
+        '学びやすくなるようにこのアプリケーションを作りました。 ',
+        'このアプリケーションを楽しんで使って頂いて、 ',
+        '何かを学習して頂けたなら嬉しいです。',
+        '',
+        '# とりあえず触ってみたい方へ：',
+        '',
+        '簡単なデモを用意してあるので、もしよければこちらもご覧ください：',
+        '',
+        '[http://remore.github.com/learnGitBranching-ja/?demo](http://remore.github.com/learnGitBranching-ja/?demo)',
+        '',
+        'このダイアログ自体を省略するには、以下のようにURLの末尾にクエリストリング`?NODEMO`を付加してアクセスしてください。',
+        '',
         '[http://remore.github.com/learnGitBranching-ja/?NODEMO](http://remore.github.com/learnGitBranching-ja/?NODEMO)'
       ]
     }
@@ -20809,10 +20998,6 @@ require.define("sys",function(require,module,exports,__dirname,__filename,proces
 
 require.define("child_process",function(require,module,exports,__dirname,__filename,process,global){exports.spawn = function () {};
 exports.exec = function () {};
-
-});
-
-require.define("fs",function(require,module,exports,__dirname,__filename,process,global){// nothing to see here... no file methods for the browser
 
 });
 
@@ -21086,8 +21271,11 @@ if (require('../util').isBrowser()) {
   * and simply pipes commands to the main events system
 **/
 function CommandUI() {
+  var Views = require('../views');
   var Collections = require('../models/collections');
   var CommandViews = require('../views/commandViews');
+
+  var mainHelprBar = new Views.MainHelperBar();
 
   this.commandCollection = new Collections.CommandCollection();
   this.commandBuffer = new Collections.CommandBuffer({
@@ -21142,6 +21330,16 @@ require.define("/src/js/dialogs/confirmShowSolution.js",function(require,module,
         '## Are you sure you want to see the solution?',
         '',
         'I believe in you! You can do it'
+      ]
+    }
+  }],
+  'zh_CN': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 确定要看答案吗？',
+        '',
+        '哥相信你！你可以的'
       ]
     }
   }]
@@ -21207,6 +21405,17 @@ require.define("/src/js/dialogs/nextLevel.js",function(require,module,exports,__
       ]
     }
   }],
+  'ja': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 完成!',
+        '',
+        'あなたは*{numCommands}*回のコマンドでこの課題をクリアしました; ',
+        '模範解答では{best}回です。'
+      ]
+    }
+  }],
   'zh_CN': [{
     type: 'ModalAlert',
     options: {
@@ -21225,6 +21434,62 @@ require("/src/js/dialogs/nextLevel.js");
 
 require.define("/src/js/dialogs/sandbox.js",function(require,module,exports,__dirname,__filename,process,global){exports.dialog = {
   'en_US': [{
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## LearnGitBranchingへようこそ',
+        '',
+        'gitのパワフルなブランチ機能のコンセプトが ',
+        '学びやすくなるようにこのアプリケーションを作りました。 ',
+        'このアプリケーションを楽しんで使って頂いて、 ',
+        '何かを学習して頂けたなら嬉しいです。',
+        '',
+        '# とりあえず触ってみたい方へ：',
+        '',
+        '簡単なデモを用意してあるので、もしよければこちらもご覧ください：',
+        '',
+        '[http://remore.github.com/learnGitBranching-ja/?demo](http://remore.github.com/learnGitBranching-ja/?demo)',
+        '',
+        'このダイアログ自体を省略するには、以下のようにURLの末尾にクエリストリング`?NODEMO`を付加してアクセスしてください。',
+        '',
+        '[http://pcottle.github.com/learnGitBranching/?NODEMO](?NODEMO)'
+      ]
+    }
+  }, {
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## ここで学べるGitのオペレーション',
+        '',
+        'ここでは、下記の種類のgitコマンドを学ぶことができます。',
+        '',
+        ' * commit',
+        ' * branch',
+        ' * checkout',
+        ' * cherry-pick',
+        ' * reset',
+        ' * revert',
+        ' * rebase',
+        ' * merge'
+      ]
+    }
+  }, {
+    type: 'ModalAlert',
+    options: {
+      markdowns: [
+        '## 学習した内容を共有できます',
+        '',
+        '画面左のコマンドプロンプトから`export tree`や`import tree`とタイプすることで、gitのツリー構造を友達に送ることができます',
+        '',
+        '何か教材になるようなケースはご存知ないでしょうか。`build level`で課題を作成したり、`import level`で他の人の課題に挑戦してみてください。',
+        '',
+        'To see the full range of commands, try `show commands`. There are some gems like `undo` and `reset`',
+        '',
+        'それでは教材の選択画面に進んでみることにします。'
+      ]
+    }
+  }],
+  'ja': [{
     type: 'ModalAlert',
     options: {
       markdowns: [
@@ -22620,6 +22885,7 @@ GitEngine.prototype.rebaseAltID = function(id) {
     }]
   ];
 
+  // for loop for early return
   for (var i = 0; i < regexMap.length; i++) {
     var regex = regexMap[i][0];
     var func = regexMap[i][1];
@@ -23604,6 +23870,79 @@ TreeCompare.prototype.compareBranchesWithinTreesHashAgnostic = function(treeA, t
   return result;
 };
 
+TreeCompare.prototype.evalAsserts = function(tree, assertsPerBranch) {
+  var result = true;
+  _.each(assertsPerBranch, function(asserts, branchName) {
+    result = result && this.evalAssertsOnBranch(tree, branchName, asserts);
+  }, this);
+
+  console.log('EVAL ASSETS was', result);
+  return result;
+};
+
+TreeCompare.prototype.evalAssertsOnBranch = function(tree, branchName, asserts) {
+  tree = this.convertTreeSafe(tree);
+
+  // here is the outline:
+  // * make a data object
+  // * go to the branch given by the key
+  // * traverse upwards, storing the amount of hashes on each in the data object
+  // * then come back and perform functions on data
+  console.log('doing asserts on', branchName);
+
+  if (!tree.branches[branchName]) {
+    return false;
+  }
+
+  var branch = tree.branches[branchName];
+  var queue = [branch.target];
+  var data = {};
+  while (queue.length) {
+    var commitRef = queue.pop();
+    console.log(commitRef);
+    data[this.getBaseRef(commitRef)] = this.getNumHashes(commitRef);
+
+    queue = queue.concat(tree.commits[commitRef].parents);
+  }
+
+  console.log('data is', data);
+  var result = true;
+  _.each(asserts, function(assert) {
+    try {
+      result = result && assert(data);
+    } catch (err) {
+      console.err(err);
+      result = false;
+    }
+  });
+
+  return result;
+};
+
+TreeCompare.prototype.getNumHashes = function(ref) {
+  var regexMap = [
+    [/^C(\d+)([']{0,3})$/, function(bits) {
+      if (!bits[2]) {
+        return 0;
+      }
+      return bits[2].length;
+    }],
+    [/^C(\d+)['][\^](\d+)$/, function(bits) {
+      return Number(bits[2]);
+    }]
+  ];
+
+  for (var i = 0; i < regexMap.length; i++) {
+    var regex = regexMap[i][0];
+    var func = regexMap[i][1];
+    var results = regex.exec(ref);
+    if (results) {
+      return func(results);
+    }
+  }
+  throw new Error('coudlnt parse ref ' + ref);
+};
+
 TreeCompare.prototype.getBaseRef = function(ref) {
   var idRegex = /^C(\d+)/;
   var bits = idRegex.exec(ref);
@@ -23619,11 +23958,15 @@ TreeCompare.prototype.getRecurseCompareHashAgnostic = function(treeA, treeB) {
 
   // some buildup functions
   var getStrippedCommitCopy = _.bind(function(commit) {
+    if (!commit) { return {}; }
     return _.extend(
       {},
       commit,
-      {id: this.getBaseRef(commit.id)
-    });
+      {
+        id: this.getBaseRef(commit.id),
+        parents: null
+      }
+    );
   }, this);
 
   var isEqual = function(commitA, commitB) {
@@ -23650,8 +23993,9 @@ TreeCompare.prototype.getRecurseCompare = function(treeA, treeB, options) {
     // we loop through each parent ID. we sort the parent ID's beforehand
     // so the index lookup is valid. for merge commits this will duplicate some of the
     // checking (because we aren't doing graph search) but it's not a huge deal
-    var allParents = _.unique(commitA.parents.concat(commitB.parents));
-    _.each(allParents, function(pAid, index) {
+    var maxNumParents = Math.max(commitA.parents.length, commitB.parents.length);
+    _.each(_.range(maxNumParents), function(index) {
+      var pAid = commitA.parents[index];
       var pBid = commitB.parents[index];
 
       // if treeA or treeB doesn't have this parent,
@@ -23788,223 +24132,6 @@ child_process.exec(
 });
 require("/src/js/intl/checkStrings.js");
 
-require.define("/src/js/intl/helpTranslate.js",function(require,module,exports,__dirname,__filename,process,global){/*
- * Warning!! This is this hackiest goddamn script evarrr. Don't
- * judge :D
- */
-
-var child_process = require('child_process');
-var fs = require('fs');
-var _ = require('underscore');
-var Q = require('q');
-var intl = require('../intl');
-
-var shouldBegin = Q.defer();
-var translateQueue = [];
-var outputLocale = 'pirate';
-
-var translate = function(context, path, key, blob) {
-  translateQueue.push({
-    context: context,
-    path: path,
-    key: key,
-    blob: blob
-  });
-};
-
-// CONFIG stuff
-var findLevelsCommand = 'find ../../levels -name "*.js"';
-
-var processLevelIndex = function() {
-  var path = '../../levels';
-  var sequenceInfo = require(path).sequenceInfo;
-
-  var genNameContext = function(sequence) {
-    var name = intl.getIntlKey(sequence, 'displayName');
-    return [
-      'This is a title of a level sequence "' + name + '" ',
-      'What is the best translation for that title?'
-    ].join('\n');
-  };
-
-  var genAboutContext = function(sequence) {
-    var name = intl.getIntlKey(sequence, 'displayName');
-    var about = intl.getIntlKey(sequence, 'about');
-    return [
-      'For the level sequence "' + name + '",',
-      'the about section is:',
-      '~~"' + about + '"',
-      '',
-      'What is the best translation for the about section?'
-    ].join('\n');
-  };
-
-  _.each(sequenceInfo, function(sequence) {
-    translate(
-      genNameContext(sequence),
-      path,
-      'displayName',
-      sequence.displayName
-    );
-
-    translate(
-      genAboutContext(sequence),
-      path,
-      'about',
-      sequence.about
-    );
-  });
-};
-
-var processLevel = function(levelPath) {
-  if (/index.js/.test(levelPath)) {
-    return;
-  }
-
-  var level = require(levelPath).level;
-  // TODO
-};
-
-child_process.exec(findLevelsCommand, function(err, output) {
-  _.each(output.split('\n'), function(levelPath) {
-    if (!levelPath || !levelPath.length) {
-      return;
-    }
-
-    processLevel(levelPath);
-  });
-
-  processLevelIndex();
-  shouldBegin.resolve();
-});
-
-var printContext = function(queueObj) {
-  if (typeof queueObj.context === 'string') {
-    console.log(queueObj.context);
-  } else {
-    var results = queueObj.context();
-    if (results) { console.log(results); }
-  }
-};
-
-var printSeparator = function() {
-  var printLn = function() {
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-  };
-
-  var printSpace = function(num) {
-    num = (num === undefined) ? 1 : num;
-    for (var i = 0; i < num; i++) {
-      console.log('\n');
-    }
-  };
-
-  var printRandomEmoji = function() {
-    var emojis = [
-      ':D',
-      '~~~ (> O o)> ~~~~'
-    ];
-
-    var index = Math.floor(Math.random() * emojis.length);
-    console.log(emojis[index]);
-  };
-
-  printLn();
-  printSpace(1);
-  printRandomEmoji();
-  printSpace(1);
-  printLn();
-};
-
-var printPrompt = function() {
-  console.log('(input)>>');
-};
-
-var collectInput = function(cb) {
-  setTimeout(function() {
-    cb('hihi');
-  }, 50);
-};
-
-var popTranslateQueue = function(queueObj) {
-  printSeparator();
-  printContext(queueObj);
-  printPrompt();
-
-  collectInput(function(input) {
-    outputTranslation(queueObj, input);
-  });
-};
-
-var appendLineAfterNeedleToFile = function(path, needle, line) {
-  // silly relative paths
-  var endPath;
-  try {
-    var easyPath = path + '.js';
-    fs.readFileSync(easyPath);
-    endPath = easyPath;
-  } catch (err) {
-  }
-  if (!endPath) {
-    // perhaps an index.js
-    try {
-      var indexPath = path + '/index.js';
-      indexPath = indexPath.replace('//', '/');
-      fs.readFileSync(indexPath);
-      endPath = indexPath;
-    } catch (err) {
-    }
-  }
-
-  if (!endPath) {
-    throw new Error('Could not find path ' + path + ' !!');
-  }
-
-  // ok now do the needle thing
-  var fileContents = fs.readFileSync(endPath).toString();
-  var fileLines = fileContents.split('\n');
-
-  var toEscape = '()[]?+*'.split('');
-  _.each(toEscape, function(chr) {
-    needle = needle.replace(chr, '\\' + chr);
-  });
-
-  var regex = new RegExp(needle);
-  var numberMatches = 0;
-  _.each(fileLines, function(line) {
-    if (regex.test(line)) {
-      numberMatches++;
-    }
-  });
-
-  if (numberMatches !== 1) {
-    console.log('WARNING couldnt find needle\n', needle, 'in path\n', endPath);
-    return;
-  }
-
-  // now output :OOO
-
-};
-
-var outputTranslation = function(queueObj, input) {
-  console.log(queueObj.blob);
-  var path = queueObj.path;
-  var needle = queueObj.blob['en_US'];
-  console.log('the needle \n', needle, '\n in path', path);
-
-  appendLineAfterNeedleToFile(path, needle, 'haha');
-};
-
-shouldBegin.promise
-.then(function() {
-  _.each(translateQueue, popTranslateQueue);
-});
-
-
-
-});
-require("/src/js/intl/helpTranslate.js");
-
 require.define("/src/js/intl/index.js",function(require,module,exports,__dirname,__filename,process,global){var _ = require('underscore');
 var constants = require('../util/constants');
 var util = require('../util');
@@ -24105,7 +24232,7 @@ var getStartDialog = exports.getStartDialog = function(level) {
     }
   };
   var startCopy = _.clone(
-    level.startDialog[util.getDefaultLocale()] || level.startDialog
+    level.startDialog[getDefaultLocale()] || level.startDialog
   );
   startCopy.childViews.unshift(errorAlert);
 
@@ -24121,6 +24248,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-finished': {
     '__desc__': 'One of the lines in the next level dialog',
+    'ja': '最後のレベルをクリアしました！すごい！！',
     'en_US': '最後のレベルをクリアしました！すごい！！',
     'zh_CN': '我的个天！你完成了最后一关，碉堡了！'
   },
@@ -24128,18 +24256,21 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   'finish-dialog-next': {
     '__desc__': 'One of the lines in the next level dialog',
     'en_US': '次の章 *"{nextLevel}"* へ進みますか？',
+    'ja': '次の章 *"{nextLevel}"* へ進みますか？',
     'zh_CN': '要不前进到下一关 *“{nextLevel}”*？'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-win': {
     '__desc__': 'One of the lines in the next level dialog',
     'en_US': '素晴らしい！このレベルをクリアしましたね。',
+    'ja': '素晴らしい！このレベルをクリアしましたね。',
     'zh_CN': '牛鼻啊！你达到或者完爆了我们的答案。'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-lose': {
     '__desc__': 'When the user entered more commands than our best, encourage them to do better',
     'en_US': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
+    'ja': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
     'zh_CN': '试试看你能否在 {best} 之内搞定 :D'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -24293,6 +24424,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   'learn-git-branching': {
     '__desc__': 'The title of the app, with spaces',
     'en_US': 'Learn Git Branching',
+    'ja': '日本語版リポジトリ',
     'ko': 'Git 브랜치 배우기',
     'zh_CN': '学习Git分支'
   },
@@ -24363,6 +24495,16 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
     'zh_CN': '语言重置为默认的 {locale}'
   },
   ///////////////////////////////////////////////////////////////////////////
+  'show-command': {
+    '__desc__': 'command output title from "show"',
+    'en_US': 'Please use one of the following commands for more info:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
+  'show-all-commands': {
+    '__desc__': 'command output title from "show commands"',
+    'en_US': 'Here is a list of all the commmands available:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
   'cd-command': {
     '__desc__': 'dummy command output for the command in the key',
     'en_US': 'Directory changed to "/directories/dont/matter/in/this/demo"',
@@ -24419,7 +24561,7 @@ require.define("/src/js/intl/strings.js",function(require,module,exports,__dirna
   ///////////////////////////////////////////////////////////////////////////
   'already-solved': {
     '__desc__': 'When you play in a level that is already solved',
-    'en_US': 'You have alreaady solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
+    'en_US': 'You have already solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
     'zh_CN': '你已经解决了本关，输入 "levels" 尝试其他关卡，或者输入 "sandbox" 回到沙盒中'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -24758,7 +24900,7 @@ var LevelBuilder = Level.extend({
     };
     LevelBuilder.__super__.initialize.apply(this, [options]);
 
-    this.startDialog = undefined;
+    this.startDialogObj = undefined;
     this.definedGoal = false;
 
     // we wont be using this stuff, and its to delete to ensure we overwrite all functions that
@@ -24801,6 +24943,21 @@ var LevelBuilder = Level.extend({
       'commandSubmitted',
       'echo :D'
     );
+  },
+
+  objectiveDialog: function(command, deferred) {
+    var args = [
+      command,
+      deferred,
+      (this.startDialogObj === undefined) ?
+        null :
+        {
+          startDialog: {
+            'en_US': this.startDialogObj
+          }
+        }
+    ];
+    LevelBuilder.__super__.objectiveDialog.apply(this, args);
   },
 
   initParseWaterfall: function(options) {
@@ -24914,12 +25071,12 @@ var LevelBuilder = Level.extend({
   editDialog: function(command, deferred) {
     var whenDoneEditing = Q.defer();
     this.currentBuilder = new MultiViewBuilder({
-      multiViewJSON: this.startDialog,
+      multiViewJSON: this.startDialogObj,
       deferred: whenDoneEditing
     });
     whenDoneEditing.promise
     .then(_.bind(function(levelObj) {
-      this.startDialog = levelObj;
+      this.startDialogObj = levelObj;
     }, this))
     .fail(function() {
       // nothing to do, they dont want to edit it apparently
@@ -24971,7 +25128,7 @@ var LevelBuilder = Level.extend({
       });
     }
 
-    if (this.startDialog === undefined) {
+    if (this.startDialogObj === undefined) {
       var askForStartDeferred = Q.defer();
       chain = chain.then(function() {
         return askForStartDeferred.promise;
@@ -25017,8 +25174,8 @@ var LevelBuilder = Level.extend({
     );
     // the start dialog now is just our help intro thing
     delete compiledLevel.startDialog;
-    if (this.startDialog) {
-      compiledLevel.startDialog = {'en_US': this.startDialog};
+    if (this.startDialogObj) {
+      compiledLevel.startDialog = {'en_US': this.startDialogObj};
     }
     return compiledLevel;
   },
@@ -25049,7 +25206,6 @@ var LevelBuilder = Level.extend({
 
   die: function() {
     this.hideStart();
-
     LevelBuilder.__super__.die.apply(this, arguments);
 
     delete this.startVis;
@@ -25138,7 +25294,8 @@ var regexMap = {
   'start dialog': /^start dialog$/,
   'show goal': /^(show goal|goal|help goal)$/,
   'hide goal': /^hide goal$/,
-  'show solution': /^show solution($|\s)/
+  'show solution': /^show solution($|\s)/,
+  'objective': /^(objective|assignment)$/
 };
 
 var parse = util.genParseCommand(regexMap, 'processLevelCommand');
@@ -25184,6 +25341,31 @@ var Level = Sandbox.extend({
     setTimeout(function() {
       deferred.resolve();
     }, this.getAnimationTime() * 1.2);
+  },
+
+  objectiveDialog: function(command, deferred, levelObj) {
+    levelObj = (levelObj === undefined) ? this.level : levelObj;
+
+    if (!levelObj || !levelObj.startDialog) {
+      command.set('error', new Errors.GitError({
+        msg: intl.str('no-start-dialog')
+      }));
+      deferred.resolve();
+      return;
+    }
+
+    var dialog = _.clone(intl.getStartDialog(levelObj));
+    // grab the last slide only
+    dialog.childViews = dialog.childViews.splice(-1);
+    new MultiView(_.extend(
+      dialog,
+      { deferred: deferred }
+    ));
+
+    // when its closed we are done
+    deferred.promise.then(function() {
+      command.set('status', 'finished');
+    });
   },
 
   startDialog: function(command, deferred) {
@@ -25417,6 +25599,7 @@ var Level = Sandbox.extend({
     }
 
     // TODO refactor this ugly ass switch statement...
+    // BIG TODO REALLY REFACTOR HAX HAX
     // ok so lets see if they solved it...
     var current = this.mainVis.gitEngine.exportTree();
     var solved;
@@ -25428,6 +25611,12 @@ var Level = Sandbox.extend({
       solved = this.treeCompare.compareAllBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString);
     } else if (this.level.compareOnlyMasterHashAgnostic) {
       solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+    } else if (this.level.compareOnlyMasterHashAgnosticWithAsserts) {
+      solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+      solved = solved && this.treeCompare.evalAsserts(
+        current,
+        this.level.goalAsserts
+      );
     } else {
       solved = this.treeCompare.compareAllBranchesWithinTreesAndHEAD(current, this.level.goalTreeString);
     }
@@ -25596,7 +25785,8 @@ var Level = Sandbox.extend({
       'hide goal': this.hideGoal,
       'show solution': this.showSolution,
       'start dialog': this.startDialog,
-      'help level': this.startDialog
+      'help level': this.startDialog,
+      'objective': this.objectiveDialog
     };
     var method = methodMap[command.get('method')];
     if (!method) {
@@ -26058,6 +26248,7 @@ var Sandbox = Backbone.View.extend({
           deferred: whenLevelOpen,
           command: command
         });
+        this.hide();
 
         whenLevelOpen.promise.then(function() {
           command.finishWith(deferred);
@@ -26186,6 +26377,19 @@ var instantCommands = [
       )
     });
   }],
+  [/^show$/, function(bits) {
+    var lines = [
+      intl.str('show-command'),
+      '<br/>',
+      'show commands',
+      'show solution',
+      'show goal'
+    ];
+
+    throw new CommandResult({
+      msg: lines.join('\n')
+    });
+  }],
   [/^locale (\w+)$/, function(bits) {
     constants.GLOBAL.locale = bits[1];
 
@@ -26219,6 +26423,20 @@ var instantCommands = [
     throw new CommandResult({
       msg: msg
     });
+  }],
+  [/^show +commands$/, function(bits) {
+    var allCommands = getAllCommands();
+    var lines = [
+      intl.str('show-all-commands'),
+      '<br/>'
+    ];
+    _.each(allCommands, function(regex, command) {
+      lines.push(command);
+    });
+
+    throw new CommandResult({
+      msg: lines.join('\n')
+    });
   }]
 ];
 
@@ -26238,6 +26456,24 @@ var regexMap = {
   'import tree': /^import +tree$/,
   'import level': /^import +level$/,
   'undo': /^undo($|\s)/
+};
+
+var getAllCommands = function() {
+  var toDelete = [
+    'mobileAlert'
+  ];
+
+  var allCommands = _.extend(
+    {},
+    require('../git/commands').regexMap,
+    require('../level').regexMap,
+    regexMap
+  );
+  _.each(toDelete, function(key) {
+    delete allCommands[key];
+  });
+
+  return allCommands;
 };
 
 exports.instantCommands = instantCommands;
@@ -27383,7 +27619,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   addView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var type = $(el).attr('data-type');
 
     var whenDone = Q.defer();
@@ -27406,7 +27642,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   testOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var toTest = this.getChildViews()[index];
     var MultiView = require('../views/multiView').MultiView;
@@ -27423,7 +27659,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   editOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var type = $(el).attr('data-type');
 
@@ -27447,7 +27683,7 @@ var MultiViewBuilder = ContainedBase.extend({
   },
 
   deleteOneView: function(ev) {
-    var el = ev.srcElement;
+    var el = ev.target;
     var index = $(el).attr('data-index');
     var toSlice = this.getChildViews();
 
@@ -27563,7 +27799,7 @@ var CommandPromptView = Backbone.View.extend({
   },
 
   onKeyDown: function(e) {
-    var el = e.srcElement || e.currentTarget;
+    var el = e.target;
     this.updatePrompt(el);
   },
 
@@ -28104,7 +28340,7 @@ var GitDemonstrationView = ContainedBase.extend({
 
   initVis: function() {
     this.mainVis = new Visualization({
-      el: this.$('div.visHolder')[0],
+      el: this.$('div.visHolder div.visHolderInside')[0],
       noKeyboardInput: true,
       noClick: true,
       smallCanvas: true,
@@ -28699,6 +28935,185 @@ var LevelToolbar = BaseView.extend({
   }
 });
 
+var HelperBar = BaseView.extend({
+  tagName: 'div',
+  className: 'helperBar transitionAll',
+  template: _.template($('#helper-bar-template').html()),
+  events: {
+    'click a': 'onClick'
+  },
+
+  onClick: function(ev) {
+    var target = ev.target;
+    var id = $(target).attr('data-id');
+    var funcName = 'on' + id[0].toUpperCase() + id.slice(1) + 'Click';
+    this[funcName].call(this);
+  },
+
+  show: function() {
+    this.$el.toggleClass('show', true);
+  },
+
+  hide: function() {
+    this.$el.toggleClass('show', false);
+    if (this.deferred) {
+      this.deferred.resolve();
+    }
+  },
+
+  getItems: function() {
+    return [];
+  },
+
+  setupChildren: function() {
+  },
+
+  fireCommand: function(command) {
+    Main.getEventBaton().trigger('commandSubmitted', command);
+  },
+
+  showDeferMe: function(otherBar) {
+    this.hide();
+
+    var whenClosed = Q.defer();
+    otherBar.deferred = whenClosed;
+    whenClosed.promise.then(_.bind(function() {
+      this.show();
+    }, this));
+    otherBar.show();
+  },
+
+  onExitClick: function() {
+    this.hide();
+  },
+
+  initialize: function(options) {
+    options = options || {};
+    this.destination = $('body');
+
+    this.JSON = {
+      items: this.getItems()
+    };
+    this.render();
+    this.setupChildren();
+
+    if (!options.wait) {
+      this.show();
+    }
+  }
+});
+
+var IntlHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      text: 'Git Branching',
+      id: 'english'
+    }, {
+      text: '日本語版リポジトリ',
+      id: 'japanese'
+    }, {
+      text: 'Git 브랜치 배우기',
+      id: 'korean'
+    }, {
+      text: '学习Git分支',
+      id: 'chinese'
+    }, {
+      text: 'Français(e)',
+      id: 'french'
+    }, {
+      icon: 'signout',
+      id: 'exit'
+    }];
+  },
+
+  onJapaneseClick: function() {
+    this.fireCommand('locale ja; levels');
+    this.hide();
+  },
+
+  onEnglishClick: function() {
+    this.fireCommand('locale en_US; levels');
+    this.hide();
+  },
+
+  onKoreanClick: function() {
+    this.fireCommand('locale ko; levels');
+    this.hide();
+  },
+
+  onFrenchClick: function() {
+    this.fireCommand('locale fr_FR; levels');
+    this.hide();
+  },
+
+  onChineseClick: function() {
+    this.fireCommand('locale zh_CN; levels');
+    this.hide();
+  }
+});
+
+var CommandsHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      text: 'Levels',
+      id: 'levels'
+    }, {
+      text: 'Reset',
+      id: 'reset'
+    }, {
+      text: 'Undo',
+      id: 'undo'
+    }, {
+      text: 'Help',
+      id: 'help'
+    }, {
+      icon: 'signout',
+      id: 'exit'
+    }];
+  },
+
+  onLevelsClick: function() {
+    this.fireCommand('levels');
+  },
+
+  onResetClick: function() {
+    this.fireCommand('reset');
+  },
+
+  onUndoClick: function() {
+    this.fireCommand('undo');
+  },
+
+  onHelpClick: function() {
+    this.fireCommand('help general; git help');
+  }
+});
+
+var MainHelperBar = HelperBar.extend({
+  getItems: function() {
+    return [{
+      icon: 'question-sign',
+      id: 'commands'
+    }, {
+      icon: 'globe',
+      id: 'intl'
+    }];
+  },
+
+  onIntlClick: function() {
+    this.showDeferMe(this.intlHelper);
+  },
+
+  onCommandsClick: function() {
+    this.showDeferMe(this.commandsHelper);
+  },
+
+  setupChildren: function() {
+    this.commandsHelper = new CommandsHelperBar({ wait: true });
+    this.intlHelper = new IntlHelperBar({ wait: true});
+  }
+});
+
 var CanvasTerminalHolder = BaseView.extend({
   tagName: 'div',
   className: 'canvasTerminalHolder box flex1',
@@ -28766,6 +29181,8 @@ exports.LeftRightView = LeftRightView;
 exports.ZoomAlertWindow = ZoomAlertWindow;
 exports.ConfirmCancelTerminal = ConfirmCancelTerminal;
 exports.WindowSizeAlertWindow = WindowSizeAlertWindow;
+
+exports.MainHelperBar = MainHelperBar;
 
 exports.CanvasTerminalHolder = CanvasTerminalHolder;
 exports.LevelToolbar = LevelToolbar;
@@ -29034,7 +29451,9 @@ var SeriesView = BaseView.extend({
   className: 'seriesView box flex1 vertical',
   template: _.template($('#series-view').html()),
   events: {
-    'click div.levelIcon': 'click'
+    'click div.levelIcon': 'click',
+    'mouseenter div.levelIcon': 'enterIcon',
+    'mouseleave div.levelIcon': 'leaveIcon'
   },
 
   initialize: function(options) {
@@ -29049,9 +29468,11 @@ var SeriesView = BaseView.extend({
     }, this);
 
     this.destination = options.destination;
+    // use a non-breaking space to prevent the level from bouncing around
+    // from missing strings
     this.JSON = {
       displayName: intl.getIntlKey(this.info, 'displayName'),
-      about: intl.getIntlKey(this.info, 'about'),
+      about: intl.getIntlKey(this.info, 'about') || "&nbsp;",
       ids: this.levelIDs
     };
 
@@ -29068,13 +29489,32 @@ var SeriesView = BaseView.extend({
     });
   },
 
-  click: function(ev) {
-    var element = ev.srcElement || ev.currentTarget;
-    if (!element) {
-      console.warn('wut, no id'); return;
-    }
+  getEventID: function(ev) {
+    var element = ev.target;
+    return $(element).attr('data-id');
+  },
 
-    var id = $(element).attr('data-id');
+  resetAbout: function() {
+    this.$('p.about').text(intl.getIntlKey(this.info, 'about'))
+      .css('font-style', 'inherit');
+  },
+
+  setAbout: function(content) {
+    this.$('p.about').text(content).css('font-style', 'italic');
+  },
+
+  enterIcon: function(ev) {
+    var id = this.getEventID(ev);
+    var level = Main.getLevelArbiter().getLevel(id);
+    this.setAbout(intl.getName(level));
+  },
+
+  leaveIcon: function() {
+    this.resetAbout();
+  },
+
+  click: function(ev) {
+    var id = this.getEventID(ev);
     this.navEvents.trigger('clickedID', id);
   }
 });
@@ -30304,9 +30744,10 @@ GitVisuals.prototype.maxWidthRecursive = function(commit) {
   return maxWidth;
 };
 
-GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
-  // I always center myself within my bounds
-  var myWidthPos = (min + max) / 2.0;
+GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max, centerFrac) {
+  centerFrac = (centerFrac === undefined) ? 0.5 : centerFrac;
+  // I always position myself within my bounds
+  var myWidthPos = min + (max - min) * centerFrac;
   commit.get('visNode').get('pos').x = myWidthPos;
 
   if (commit.get('children').length === 0) {
@@ -30325,21 +30766,43 @@ GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
     }
   }, this);
 
-  var prevBound = min;
+  // TODO: refactor into another method
+  var getCenterFrac = function(index, centerFrac) {
+    if (myLength < 0.99) {
+      if (children.length < 2) {
+        return centerFrac;
+      } else {
+        return 0.5;
+      }
+    }
+    if (children.length < 2) {
+      return 0.5;
+    }
+    // we introduce a VERY specific rule here, to push out
+    // the first "divergence" of the graph
+    if (index === 0) {
+      return 1/3;
+    } else if (index === children.length - 1) {
+      return 2/3;
+    }
+    return centerFrac;
+  };
 
-  // now go through and do everything
-  // TODO: order so the max width children are in the middle!!
-  _.each(children, function(child) {
+  var prevBound = min;
+  _.each(children, function(child, index) {
     if (!child.isMainParent(commit)) {
       return;
     }
 
     var flex = child.get('visNode').getMaxWidthScaled();
     var portion = (flex / totalFlex) * myLength;
+    var thisCenterFrac = getCenterFrac(index, centerFrac);
+
     var childMin = prevBound;
     var childMax = childMin + portion;
-    this.assignBoundsRecursive(child, childMin, childMax);
-    prevBound = childMax;
+
+    this.assignBoundsRecursive(child, childMin, childMax, thisCenterFrac);
+    prevBound = childMin + portion;
   }, this);
 };
 
@@ -30471,7 +30934,7 @@ GitVisuals.prototype.genResizeFunc = function() {
     _.bind(function(width, height) {
 
       // refresh when we are ready if we are animating som ething
-      if (GLOBAL.isAnimating) {
+      if (false && GLOBAL.isAnimating) {
         var Main = require('../app');
         Main.getEventBaton().trigger('commandSubmitted', 'refresh');
       } else {
@@ -30796,14 +31259,32 @@ var VisBranch = VisBase.extend({
     var commit = this.gitEngine.getCommitFromRef(this.get('branch'));
     var visNode = commit.get('visNode');
 
-    var threshold = this.get('gitVisuals').getFlipPos();
-    // somewhat tricky flip management here
-    if (visNode.get('pos').x > threshold || this.get('isHead')) {
-      this.set('flip', -1);
-    } else {
-      this.set('flip', 1);
-    }
+    this.set('flip', this.getFlipBool(commit, visNode));
     return visNode.getScreenCoords();
+  },
+
+  getFlipBool: function(commit, visNode) {
+    var threshold = this.get('gitVisuals').getFlipPos();
+    var overThreshold = (visNode.get('pos').x > threshold);
+
+    if (!this.get('isHead')) {
+      // easy logic first
+      return (overThreshold) ?
+        -1 :
+        1;
+    }
+    // now for HEAD....
+    if (overThreshold) {
+      // if by ourselves, then feel free to squeeze in. but
+      // if other branches are here, then we need to show separate
+      return (this.isBranchStackEmpty()) ?
+        -1 :
+        1;
+    } else {
+      return (this.isBranchStackEmpty()) ?
+        1 :
+        -1;
+    }
   },
 
   getBranchStackIndex: function() {
@@ -30831,8 +31312,25 @@ var VisBranch = VisBase.extend({
     return this.getBranchStackArray().length;
   },
 
+  isBranchStackEmpty: function() {
+    // useful function for head when computing flip logic
+    var arr = this.gitVisuals.branchStackMap[this.getCommitID()];
+    return (arr) ?
+      arr.length === 0 :
+      true;
+  },
+
+  getCommitID: function() {
+    var target = this.get('branch').get('target');
+    if (target.get('type') === 'branch') {
+      // for HEAD
+      target = target.get('target');
+    }
+    return target.get('id');
+  },
+
   getBranchStackArray: function() {
-    var arr = this.gitVisuals.branchStackMap[this.get('branch').get('target').get('id')];
+    var arr = this.gitVisuals.branchStackMap[this.getCommitID()];
     if (arr === undefined) {
       // this only occurs when we are generating graphics inside of
       // a new Branch instantiation, so we need to force the update
@@ -31984,105 +32482,15 @@ exports.Visualization = Visualization;
 });
 require("/src/js/visuals/visualization.js");
 
-require.define("/src/levels/index.js",function(require,module,exports,__dirname,__filename,process,global){// Each level is part of a "sequence;" levels within
-// a sequence proceed in the order listed here
-exports.levelSequences = {
-  intro: [
-    require('../../levels/intro/1').level,
-    require('../../levels/intro/2').level,
-    require('../../levels/intro/3').level,
-    require('../../levels/intro/4').level
-  ],
-  rampup: [
-    require('../../levels/rampup/2').level
-  ],
-  rebase: [
-    require('../../levels/rebase/1').level,
-    require('../../levels/rebase/2').level
-  ],
-  mixed: [
-    require('../../levels/mixed/1').level,
-    require('../../levels/mixed/2').level,
-    require('../../levels/mixed/3').level
-  ]
-};
-
-// there are also cute names and such for sequences
-exports.sequenceInfo = {
-  intro: {
-    displayName: {
-      'en_US': 'まずはここから',
-      'fr_FR': 'Sequence d\'introduction',
-      'zh_CN': '简介序列',
-      'ko': '기본 명령어'
-    },
-    about: {
-      'en_US': 'gitの基本的なコマンド群をほどよいペースで学ぶ',
-      'fr_FR': 'Une introduction en douceur à la majoité des commandes git',
-      'zh_CN': '一个节奏感良好的主流 Git 命令介绍',
-      'ko': '브랜치 관련 주요 git 명령어를 깔끔하게 알려드립니다'
-    }
-  },
-  rampup: {
-    displayName: {
-      'en_US': '次のレベルに進もう'
-    },
-    about: {
-      'en_US': '更にgitの素晴らしさを堪能しよう'
-    }
-  },
-  rebase: {
-    displayName: {
-      'en_US': 'Rebaseをモノにする',
-      'fr_FR': 'Maîtrise Rebase, Luke!',
-      'zh_CN': '掌握衍合，兄弟！',
-      'ko': '리베이스 완전정복!'
-    },
-    about: {
-      'en_US': '話題のrebaseってどんなものだろう？って人にオススメ',
-      'fr_FR': 'Que\'est-ce que c\'est que ce rebase dont tout le monde parle ? Découvrez-le !',
-      'ko': '그 좋다고들 말하는 rebase에 대해 알아봅시다!',
-      'zh_CN': '大家说的火热的衍合都是些神马？看看吧！'
-    }
-  },
-  mixed: {
-    displayName: {
-      'en_US': '様々なtips',
-      'fr_FR': 'Un assortiment',
-      'ko': '종합선물세트',
-      'zh_CN': '大杂烩？'
-    },
-    about: {
-      'en_US': 'gitを使う上での様々なtipsやテクニックなど',
-      'fr_FR': 'Un assortiment de techniques et astuces pour utiliser Git',
-      'ko': 'Git을 다루는 다양한 팁과 테크닉을 다양하게 알아봅니다',
-      'zh_CN': 'Git技术，技巧与贴士'
-    }
-  }
-};
-
-
-});
-require("/src/levels/index.js");
-
-require.define("/src/levels/intro/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/advanced/multipleParents.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C7\",\"id\":\"master\"},\"bugWork\":{\"target\":\"C2\",\"id\":\"bugWork\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C2\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C4\",\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C6\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git branch bugWork master^^2^",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C7\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C2\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C4\",\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C6\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
-    "en_US": "Gitのコミット",
-    "fr_FR": "Introduction aux commits avec Git",
-    'ko': 'Git 커밋 소개',
-    'zh_CN': '介绍Git提交'
+    "en_US": "Multiple parents"
   },
-  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C3\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
-  "solutionCommand": "git commit;git commit",
-  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "hint": {
-    "en_US": "'git commit'コマンドを2回打てば完成!",
-    "fr_FR": "Il suffit de saisir 'git commit' deux fois pour réussir !",
-    "zh_CN": "敲两次 'git commit' 就好啦！",
-    "ko": "'git commit'이라고 두 번 치세요!"
-  },
-  "disabledMap": {
-    "git revert": true
+    "en_US": "対象のコミット上で`git branch bugWork`と打って足りない部分を補おう"
   },
   "startDialog": {
     "en_US": {
@@ -32091,18 +32499,16 @@ require.define("/src/levels/intro/1.js",function(require,module,exports,__dirnam
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "## Gitのコミット",
-              "コミットによって、ディレクトリ中の全てのファイルのスナップショットを記録します。巨大なコピー＆ペーストのようなものですが、実はそれよりずっと良いものです。",
+              "### 親を特定する",
               "",
-              "Gitではコミットを可能な限り軽量に保つために、コミット毎にフォルダ全体をコピーしません。実際にはGitは、コミットを直前のバージョンから一つ先のバージョンへの「変更の固まり」あるいは「差分」として記録します。後で出てきますが、ほとんどのコミットが親を持っているのはそういう理由からです。",
+              "`~`（チルダ）のように、`^`（キャレット）にも数字を与えることができます。",
               "",
-              "リポジトリをcloneする時には、内部動作としてはコミットの差分をたどって全ての変更を取得しています。cloneした時に以下のような表示が出るのは：",
+              "`~`（チルダ）の時は何世代前にさかのぼるかを指定しましたが、`^`（キャレット）ではどの親にさかのぼるかを指定します。コミットをマージすると複数の親コミットが生まれることを思い出してください。どの親へさかのぼるか、という問題は曖昧なのです。",
               "",
-              "`resolving deltas`（訳：差分を解決中）",
+              "Gitでは通常はマージの結果生まれたコミットの最初の親へとさかのぼりますが、`^`（キャレット）の後に数字を指定することでこのデフォルト動作を変更することができます。",
               "",
-              "このためです。",
-              "",
-              "もっと説明したいところですが、しばらくはコミットをスナップショットのようなものだと考えてください。コミットは非常に軽量であり、コミット間の移動も非常に高速です。"
+              "説明はこれくらいにして、実際の動きを見てみましょう。",
+              ""
             ]
           }
         },
@@ -32110,156 +32516,65 @@ require.define("/src/levels/intro/1.js",function(require,module,exports,__dirnam
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "これがどういうことか、動きを見ていきましょう。図には（小さな）gitリポジトリが描かれています。コミットが2つあります ― `C0`という名前の初回のコミットがあり、`C1`という名前の次のコミットが続きます。これは何か意味のある変更かもしれません。",
+              "ここにマージの結果生まれたコミットがあります。仮に数字なしで`master^`を指定すると、最初の親へとさかのぼります。 ",
               "",
-              "下のボタンを押下して新しいコミットを作ってみましょう。"
+              "(*このツール上では、「最初の親」はコミットの真上に位置している親のことを指します*)"
             ],
             "afterMarkdowns": [
-              "できました! 良いですね。いまリポジトリに新しい変更が加えられ、1つのコミットとして保存されました。作成したコミットには親がいて、このコミットの出発点となった`C1`を指しています。"
+              "一丁上がり -- この動作は見慣れてますよね。"
             ],
-            "command": "git commit",
-            "beforeCommand": ""
-          }
-        },
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "実際に手を動かしてみましょう。このウィンドウを閉じたら、試しに2回コミットをしてみましょう。"
-            ]
-          }
-        }
-      ]
-    },
-    "fr_FR": {
-      "childViews": [
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "## Commits Git",
-              "Un commit dans un dépôt (repository) git enregistre une image (snapshot) de tous les fichiers du repertoire. Comme un Copier-Coller géant, mais en bien mieux !",
-              "",
-              "Git fait en sorte que les commits soient aussi légers que possible donc il ne recopie pas tous le répertoire à chaque commit. En fait, git n'enregistre que l'ensemble des changments (\"delta\") depuis la version précédante du dépôt. C'est pour cette raison que la plupart des commits ont un commit parent -- ainsi que nous le verrons plus tard.",
-              "",
-              "Pour cloner un dépôt, il faut décompresser (\"résoudre\") tous ces deltas. C'est la raison pour laquelle la commande écrit :",
-              "",
-              "`resolving deltas`（訳：差分を解決中）",
-              "",
-              "lorsque l'on clone un dépôt.",
-              "",
-              "C'est beaucoup à absorber, mais pour l'instant vous pouvez considérer les commits comme des snapshots du projet. Les commits sont très légers et passer de l'un à l'autre est très rapide !"
-            ]
+            "command": "git checkout master^",
+            "beforeCommand": "git checkout HEAD^; git commit; git checkout master; git merge C2"
           }
         },
         {
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "Voyons à quoi cela ressemble en pratique. Sur la droite, on peut visualiser un (petit) dépôt git. Il y a pour l'instant deux commits -- le premier commit initial, `C0`, et un commit suivant `C1` qui aurait des changements significatifs.",
-              "",
-              "Appuyez sur le bouton ci-dessous pour faire un nouveau commit"
+              "次に第二の親を指定してみましょう。"
             ],
             "afterMarkdowns": [
-              "C'est parti ! Super. Nous venons de faire des modifications sur le dépôt et de saugevarder celles-ci dans un commit. Ce commit que nous venons de faire a un parent, `C1`, qui référence le commit sur lequel il est basé."
+              "わかりましたか？今度は別の親を指すようになりました。"
             ],
-            "command": "git commit",
-            "beforeCommand": ""
-          }
-        },
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "Allez-y et essayez par vous-même ! Après la fermeture de cettefenêtre, faites deux commits pour terminer ce niveau."
-            ]
-          }
-        }
-      ]
-    },
-    "ko": {
-      "childViews": [
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "## Git 커밋",
-              "커밋은 Git 저장소에 여러분의 디렉토리에 있는 모든 파일에 대한 스냅샷을 기록하는 것입니다. 디렉토리 전체에 대한 복사해 붙이기와 비슷하지만 훨씬 유용합니다!",
-              "",
-              "Git은 커밋을 가능한한 가볍게 유지하고자 해서, 커밋할 때마다 디렉토리 전체를 복사하는 일은 하지 않습니다. 각 커밋은 저장소의 이전 버전과 다음 버전의 변경내역(\"delta\"라고도 함)을 저장합니다. 그래서 대부분의 커밋이 그 커밋 위에 부모 커밋을 가리키고 있게 되는 것입니다. -- 곧 그림으로 된 화면에서 살펴보게 될 것입니다.",
-              "",
-              "저장소를 복제(clone)하려면, 그 모든 변경분(delta)를 풀어내야하는데, 그 때문에 명령행 결과로 아래와 같이 보게됩니다. ",
-              "",
-              "`resolving deltas`（訳：差分を解決中）",
-              "",
-              "알아야할 것이 꽤 많습니다만, 일단은 커밋을 프로젝트의 각각의 스냅샷들로 생각하시는 걸로 충분합니다. 커밋은 매우 가볍고 커밋 사이의 전환도 매우 빠르다는 것을 기억해주세요!"
-            ]
+            "command": "git checkout master^2",
+            "beforeCommand": "git checkout HEAD^; git commit; git checkout master; git merge C2"
           }
         },
         {
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "연습할 때 어떻게 보이는지 확인해보죠. 오른쪽 화면에 git 저장소를 그림으로 표현해 놓았습니다. 현재 두번 커밋한 상태입니다 -- 첫번째 커밋으로 `C0`, 그 다음으로 `C1`이라는 어떤 의미있는 변화가 있는 커밋이 있습니다.",
-              "",
-              "아래 버튼을 눌러 새로운 커밋을 만들어보세요"
+              "`^`（キャレット）と`~`（チルダ）に数字を組み合わせて使うことで、非常にパワフルにgitツリー内を動き回ることが可能になります。"
             ],
             "afterMarkdowns": [
-              "이렇게 보입니다! 멋지죠. 우리는 방금 저장소 내용을 변경해서 한번의 커밋으로 저장했습니다. 방금 만든 커밋은 부모는 `C1`이고, 어떤 커밋을 기반으로 변경된 것인지를 가리킵니다."
+              "光の速さ！"
             ],
-            "command": "git commit",
-            "beforeCommand": ""
-          }
-        },
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "계속해서 직접 한번 해보세요! 이 창을 닫고, 커밋을 두 번 하면 다음 레벨로 넘어갑니다"
-            ]
-          }
-        }
-      ]
-    },
-    "zh_CN": {
-      "childViews": [
-        {
-          "type": "ModalAlert",
-          "options": {
-            "markdowns": [
-              "## Gitのコミット",
-              "在一个使用 git 进行版本控制的仓库里，一次提交（commit）给你目录下所有文件做了一次快照，就好像是做了一次复制粘贴，但 git 做的不只那么简单！",
-              "",
-              "Git 希望尽可能地让这些提交记录保持轻量，所以每次在你进行提交的时候，它不会就这么复制整个工作目录。实际上它把每次提交都记录为一个相对于上个版本变化的集合，或者说一个\"差异 （delta）\"集。这也是为什么绝大部分提交都有一个父对象（parent commit） -- 迟点你就会在我们的演示中看见了。",
-              "",
-              "假如你要克隆（clone）一个仓库，你就要去解包（unpack）或者“解决（resolve）”这些差异。所以当你克隆一个仓库时会在命令行下看见这样的命令：",
-              "",
-              "`resolving deltas`（訳：差分を解決中）",
-              "",
-              "要完全理解这些概念可能要花费很多时间，但现在你可以把提交看作是项目的快照，提交非常轻量而且在它们之间切换的时候非常快。"
-            ]
+            "command": "git checkout HEAD~; git checkout HEAD^2; git checkout HEAD~2",
+            "beforeCommand": "git commit; git checkout C0; git commit; git commit; git commit; git checkout master; git merge C5; git commit"
           }
         },
         {
           "type": "GitDemonstrationView",
           "options": {
             "beforeMarkdowns": [
-              "让我们在练习里好好了解提交是什么玩意。在右边展示的是一个使用 git 管理的（小）仓库。现在有两个提交 —— 一个是初始提交 `C0`，另外一个可能包含了一些有意义修改的提交是`C1`。",
-              "",
-              "点下面的按钮来生成一个新的提交。"
+              "更に極めると、これらの修飾子をつなげて（chained）使うこともできます。見てみましょう；"
             ],
-            "command": "git commit",
             "afterMarkdowns": [
-              "看！碉堡吧！我们刚刚对这个仓库进行了一点修改，并且把这些修改提交了。我们刚刚做的提交有一个爸爸（parent），叫 `C1`，代表这个修改是基于`C1`的。"
+              "前回と同じ動きですが、一回のコマンドで全てを実現しています。"
             ],
-            "beforeCommand": ""
+            "command": "git checkout HEAD~^2~2",
+            "beforeCommand": "git commit; git checkout C0; git commit; git commit; git commit; git checkout master; git merge C5; git commit"
           }
         },
         {
           "type": "ModalAlert",
           "options": {
             "markdowns": [
-              "接下来你可以继续尝试下。在这个窗口关闭之后，提交两遍就可以过关！"
+              "### 実践でやってみる",
+              "",
+              "このレベルの仕上げに、指定された場所へ新しいブランチを作成してみましょう。",
+              "",
+              "`C6`のようにコミットのハッシュを指定する方が簡単なのは自明ですが、ここは敢えて今回学んだ修飾子たちを使って課題に挑戦してみてください。"
             ]
           }
         }
@@ -32268,20 +32583,126 @@ require.define("/src/levels/intro/1.js",function(require,module,exports,__dirnam
   }
 };
 
-});
-require("/src/levels/intro/1.js");
 
-require.define("/src/levels/intro/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+});
+require("/src/levels/advanced/multipleParents.js");
+
+require.define("/src/levels/index.js",function(require,module,exports,__dirname,__filename,process,global){// Each level is part of a "sequence;" levels within
+// a sequence proceed in the order listed here
+exports.levelSequences = {
+  intro: [
+    require('../../levels/intro/commits').level,
+    require('../../levels/intro/branching').level,
+    require('../../levels/intro/merging').level,
+    require('../../levels/intro/rebasing').level
+  ],
+  rampup: [
+    require('../../levels/rampup/detachedHead').level,
+    require('../../levels/rampup/relativeRefs').level,
+    require('../../levels/rampup/relativeRefs2').level,
+    require('../../levels/rampup/reversingChanges').level
+  ],
+  rebase: [
+    require('../../levels/rebase/manyRebases').level,
+    require('../../levels/rebase/selectiveRebase').level
+  ],
+  mixed: [
+    require('../../levels/mixed/grabbingOneCommit').level,
+    require('../../levels/mixed/jugglingCommits').level,
+    require('../../levels/mixed/jugglingCommits2').level
+  ],
+  advanced: [
+    require('../../levels/advanced/multipleParents').level
+  ]
+};
+
+// there are also cute names and such for sequences
+exports.sequenceInfo = {
+  intro: {
+    displayName: {
+      'en_US': 'まずはここから',
+      'ja': 'まずはここから',
+      'fr_FR': 'Sequence d\'introduction',
+      'zh_CN': '简介序列',
+      'ko': '기본 명령어'
+    },
+    about: {
+      'en_US': 'gitの基本的なコマンド群をほどよいペースで学ぶ',
+      'ja': 'gitの基本的なコマンド群をほどよいペースで学ぶ',
+      'fr_FR': 'Une introduction en douceur à la majoité des commandes git',
+      'zh_CN': '一个节奏感良好的主流 Git 命令介绍',
+      'ko': '브랜치 관련 주요 git 명령어를 깔끔하게 알려드립니다'
+    }
+  },
+  rampup: {
+    displayName: {
+      'en_US': '次のレベルに進もう',
+      'ja': '次のレベルに進もう'
+    },
+    about: {
+      'en_US': '更にgitの素晴らしさを堪能しよう',
+      'ja': '更にgitの素晴らしさを堪能しよう'
+    }
+  },
+  rebase: {
+    displayName: {
+      'en_US': 'Rebaseをモノにする',
+      'ja': 'Rebaseをモノにする',
+      'fr_FR': 'Maîtrise Rebase, Luke!',
+      'zh_CN': '掌握衍合，兄弟！',
+      'ko': '리베이스 완전정복!'
+    },
+    about: {
+      'en_US': '話題のrebaseってどんなものだろう？って人にオススメ',
+      'ja': '話題のrebaseってどんなものだろう？って人にオススメ',
+      'fr_FR': 'Que\'est-ce que c\'est que ce rebase dont tout le monde parle ? Découvrez-le !',
+      'ko': '그 좋다고들 말하는 rebase에 대해 알아봅시다!',
+      'zh_CN': '大家说的火热的衍合都是些神马？看看吧！'
+    }
+  },
+  mixed: {
+    displayName: {
+      'en_US': '様々なtips',
+      'ja': '様々なtips',
+      'fr_FR': 'Un assortiment',
+      'ko': '종합선물세트',
+      'zh_CN': '大杂烩？'
+    },
+    about: {
+      'en_US': 'gitを使う上での様々なtipsやテクニックなど',
+      'ja': 'gitを使う上での様々なtipsやテクニックなど',
+      'fr_FR': 'Un assortiment de techniques et astuces pour utiliser Git',
+      'ko': 'Git을 다루는 다양한 팁과 테크닉을 다양하게 알아봅니다',
+      'zh_CN': 'Git技术，技巧与贴士'
+    }
+  },
+  advanced: {
+    displayName: {
+      'en_US': '応用編'
+    },
+    about: {
+      'en_US': '真の勇者へ捧げる！'
+    }
+  }
+};
+
+
+});
+require("/src/levels/index.js");
+
+require.define("/src/levels/intro/branching.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C1\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"}},\"HEAD\":{\"target\":\"bugFix\",\"id\":\"HEAD\"}}",
   "solutionCommand": "git branch bugFix;git checkout bugFix",
   "name": {
     "en_US": "Branching in Git",
+    "ja": "Gitのブランチ",
     "ko": "Git에서 브랜치 쓰기",
     "fr_FR": "Gérer les branches avec Git",
     "zh_CN": "Git开分支"
   },
   "hint": {
     "en_US": "ブランチの作成（\"git branch [ブランチ名]\"）と、チェックアウト（\"git checkout [ブランチ名]\"）",
+    "ja": "ブランチの作成（\"git branch [ブランチ名]\"）と、チェックアウト（\"git checkout [ブランチ名]\"）",
     "fr_FR": "Faites une nouvelle branche avec \"git branch [nom]\" positionnez-vous dans celle-ci avec \"git checkout [nom]\"",
     "zh_CN": "用 'git branch [新分支名字]' 来创建新分支，并用 'git checkout [新分支]' 切换到新分支",
     "ko": "\"git branch [브랜치명]\"으로 새 브랜치를 만들고, \"git checkout [브랜치명]\"로 그 브랜치로 이동하세요"
@@ -32291,6 +32712,84 @@ require.define("/src/levels/intro/2.js",function(require,module,exports,__dirnam
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのブランチ",
+              "",
+              "Gitではコミットだけでなく、ブランチもまた信じられないほど軽量です。ブランチとは単に特定のコミットを指示したポインタにしか過ぎません。Gitの達人は決まってこう言うのは、そのためです：",
+              "",
+              "```",
+              "早めに、かつ頻繁にブランチを切りなさい",
+              "```",
+              "",
+              "どれほど多くのブランチを作ってもストレージやメモリを全然使わないので、ブランチを肥大化させるよりも論理的に分割していく方が簡単なのです。",
+              "",
+              "ブランチとコミットをあわせて使い始めると、これら2つのフィーチャがどのように連動して機能するかがわかるでしょう。ここではとりあえず、ブランチは基本的には「あるコミットとその親のコミットたちを含めた全てのコミット」のことを呼ぶと覚えておいてください。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "では実際にブランチがどのようなものかを見ていきましょう。",
+              "",
+              "`newImage`という名前の新しいブランチを切ってみることにします。"
+            ],
+            "afterMarkdowns": [
+              "以上。必要な手順はこれだけです。いま作成された`newImage`ブランチは`C1`コミットを指しています。"
+            ],
+            "command": "git branch newImage",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "この新しいブランチに何か変更を加えてみましょう。次のボタンを押してください。"
+            ],
+            "afterMarkdowns": [
+              "あれ？`newImage`ではなくて`master`ブランチが移動してしまいました。これは、私たちが`newImage`のブランチ上で作業していなかったためです。どのブランチで作業しているかは、アスタリスク(*)がついてるかどうかで分かります。"
+            ],
+            "command": "git commit",
+            "beforeCommand": "git branch newImage"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "今度は作業したいブランチ名をgitに伝えてみましょう。",
+              "",
+              "```",
+              "git checkout [ブランチ名]",
+              "```",
+              "",
+              "このようにして、コミットする前に新しいブランチへと作業ブランチを移動することができます。"
+            ],
+            "afterMarkdowns": [
+              "できましたね。今度は新しいブランチに対して変更を記録することができました。"
+            ],
+            "command": "git checkout newImage; git commit",
+            "beforeCommand": "git branch newImage"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "OK! もうどんなブランチでも切れますね。このウィンドウを閉じて、",
+              "`bugFix`という名前のブランチを作成し、そのブランチをチェックアウトしてみましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -32606,19 +33105,275 @@ require.define("/src/levels/intro/2.js",function(require,module,exports,__dirnam
 };
 
 });
-require("/src/levels/intro/2.js");
+require("/src/levels/intro/branching.js");
 
-require.define("/src/levels/intro/3.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C2\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\",\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+require.define("/src/levels/intro/commits.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "name": {
+    "en_US": "Gitのコミット",
+    "fr_FR": "Introduction aux commits avec Git",
+    "ja": "Gitのコミット",
+    'ko': 'Git 커밋 소개',
+    'zh_CN': '介绍Git提交'
+  },
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C3\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git commit;git commit",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "hint": {
+    "en_US": "'git commit'コマンドを2回打てば完成!",
+    "fr_FR": "Il suffit de saisir 'git commit' deux fois pour réussir !",
+    "zh_CN": "敲两次 'git commit' 就好啦！",
+    "ja": "'git commit'コマンドを2回打てば完成!",
+    "ko": "'git commit'이라고 두 번 치세요!"
+  },
+  "disabledMap": {
+    "git revert": true
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのコミット",
+              "コミットによって、ディレクトリ中の全てのファイルのスナップショットを記録します。巨大なコピー＆ペーストのようなものですが、実はそれよりずっと良いものです。",
+              "",
+              "Gitではコミットを可能な限り軽量に保つために、コミット毎にフォルダ全体をコピーしません。実際にはGitは、コミットを直前のバージョンから一つ先のバージョンへの「変更の固まり」あるいは「差分」として記録します。後で出てきますが、ほとんどのコミットが親を持っているのはそういう理由からです。",
+              "",
+              "リポジトリをcloneする時には、内部動作としてはコミットの差分をたどって全ての変更を取得しています。cloneした時に以下のような表示が出るのは：",
+              "",
+              "`resolving deltas`（訳：差分を解決中）",
+              "",
+              "このためです。",
+              "",
+              "もっと説明したいところですが、しばらくはコミットをスナップショットのようなものだと考えてください。コミットは非常に軽量であり、コミット間の移動も非常に高速です。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "これがどういうことか、動きを見ていきましょう。図には（小さな）gitリポジトリが描かれています。コミットが2つあります ― `C0`という名前の初回のコミットがあり、`C1`という名前の次のコミットが続きます。これは何か意味のある変更かもしれません。",
+              "",
+              "下のボタンを押下して新しいコミットを作ってみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できました! 良いですね。いまリポジトリに新しい変更が加えられ、1つのコミットとして保存されました。作成したコミットには親がいて、このコミットの出発点となった`C1`を指しています。"
+            ],
+            "command": "git commit",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "実際に手を動かしてみましょう。このウィンドウを閉じたら、試しに2回コミットをしてみましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのコミット",
+              "コミットによって、ディレクトリ中の全てのファイルのスナップショットを記録します。巨大なコピー＆ペーストのようなものですが、実はそれよりずっと良いものです。",
+              "",
+              "Gitではコミットを可能な限り軽量に保つために、コミット毎にフォルダ全体をコピーしません。実際にはGitは、コミットを直前のバージョンから一つ先のバージョンへの「変更の固まり」あるいは「差分」として記録します。後で出てきますが、ほとんどのコミットが親を持っているのはそういう理由からです。",
+              "",
+              "リポジトリをcloneする時には、内部動作としてはコミットの差分をたどって全ての変更を取得しています。cloneした時に以下のような表示が出るのは：",
+              "",
+              "`resolving deltas`（訳：差分を解決中）（訳：差分を解決中）",
+              "",
+              "このためです。",
+              "",
+              "もっと説明したいところですが、しばらくはコミットをスナップショットのようなものだと考えてください。コミットは非常に軽量であり、コミット間の移動も非常に高速です。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "これがどういうことか、動きを見ていきましょう。図には（小さな）gitリポジトリが描かれています。コミットが2つあります ― `C0`という名前の初回のコミットがあり、`C1`という名前の次のコミットが続きます。これは何か意味のある変更かもしれません。",
+              "",
+              "下のボタンを押下して新しいコミットを作ってみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できました! 良いですね。いまリポジトリに新しい変更が加えられ、1つのコミットとして保存されました。作成したコミットには親がいて、このコミットの出発点となった`C1`を指しています。"
+            ],
+            "command": "git commit",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "実際に手を動かしてみましょう。このウィンドウを閉じたら、試しに2回コミットをしてみましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "fr_FR": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Commits Git",
+              "Un commit dans un dépôt (repository) git enregistre une image (snapshot) de tous les fichiers du repertoire. Comme un Copier-Coller géant, mais en bien mieux !",
+              "",
+              "Git fait en sorte que les commits soient aussi légers que possible donc il ne recopie pas tous le répertoire à chaque commit. En fait, git n'enregistre que l'ensemble des changments (\"delta\") depuis la version précédante du dépôt. C'est pour cette raison que la plupart des commits ont un commit parent -- ainsi que nous le verrons plus tard.",
+              "",
+              "Pour cloner un dépôt, il faut décompresser (\"résoudre\") tous ces deltas. C'est la raison pour laquelle la commande écrit :",
+              "",
+              "`resolving deltas`（訳：差分を解決中）",
+              "",
+              "lorsque l'on clone un dépôt.",
+              "",
+              "C'est beaucoup à absorber, mais pour l'instant vous pouvez considérer les commits comme des snapshots du projet. Les commits sont très légers et passer de l'un à l'autre est très rapide !"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "Voyons à quoi cela ressemble en pratique. Sur la droite, on peut visualiser un (petit) dépôt git. Il y a pour l'instant deux commits -- le premier commit initial, `C0`, et un commit suivant `C1` qui aurait des changements significatifs.",
+              "",
+              "Appuyez sur le bouton ci-dessous pour faire un nouveau commit"
+            ],
+            "afterMarkdowns": [
+              "C'est parti ! Super. Nous venons de faire des modifications sur le dépôt et de saugevarder celles-ci dans un commit. Ce commit que nous venons de faire a un parent, `C1`, qui référence le commit sur lequel il est basé."
+            ],
+            "command": "git commit",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "Allez-y et essayez par vous-même ! Après la fermeture de cettefenêtre, faites deux commits pour terminer ce niveau."
+            ]
+          }
+        }
+      ]
+    },
+    "ko": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Git 커밋",
+              "커밋은 Git 저장소에 여러분의 디렉토리에 있는 모든 파일에 대한 스냅샷을 기록하는 것입니다. 디렉토리 전체에 대한 복사해 붙이기와 비슷하지만 훨씬 유용합니다!",
+              "",
+              "Git은 커밋을 가능한한 가볍게 유지하고자 해서, 커밋할 때마다 디렉토리 전체를 복사하는 일은 하지 않습니다. 각 커밋은 저장소의 이전 버전과 다음 버전의 변경내역(\"delta\"라고도 함)을 저장합니다. 그래서 대부분의 커밋이 그 커밋 위에 부모 커밋을 가리키고 있게 되는 것입니다. -- 곧 그림으로 된 화면에서 살펴보게 될 것입니다.",
+              "",
+              "저장소를 복제(clone)하려면, 그 모든 변경분(delta)를 풀어내야하는데, 그 때문에 명령행 결과로 아래와 같이 보게됩니다. ",
+              "",
+              "`resolving deltas`（訳：差分を解決中）",
+              "",
+              "알아야할 것이 꽤 많습니다만, 일단은 커밋을 프로젝트의 각각의 스냅샷들로 생각하시는 걸로 충분합니다. 커밋은 매우 가볍고 커밋 사이의 전환도 매우 빠르다는 것을 기억해주세요!"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "연습할 때 어떻게 보이는지 확인해보죠. 오른쪽 화면에 git 저장소를 그림으로 표현해 놓았습니다. 현재 두번 커밋한 상태입니다 -- 첫번째 커밋으로 `C0`, 그 다음으로 `C1`이라는 어떤 의미있는 변화가 있는 커밋이 있습니다.",
+              "",
+              "아래 버튼을 눌러 새로운 커밋을 만들어보세요"
+            ],
+            "afterMarkdowns": [
+              "이렇게 보입니다! 멋지죠. 우리는 방금 저장소 내용을 변경해서 한번의 커밋으로 저장했습니다. 방금 만든 커밋은 부모는 `C1`이고, 어떤 커밋을 기반으로 변경된 것인지를 가리킵니다."
+            ],
+            "command": "git commit",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "계속해서 직접 한번 해보세요! 이 창을 닫고, 커밋을 두 번 하면 다음 레벨로 넘어갑니다"
+            ]
+          }
+        }
+      ]
+    },
+    "zh_CN": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitのコミット",
+              "在一个使用 git 进行版本控制的仓库里，一次提交（commit）给你目录下所有文件做了一次快照，就好像是做了一次复制粘贴，但 git 做的不只那么简单！",
+              "",
+              "Git 希望尽可能地让这些提交记录保持轻量，所以每次在你进行提交的时候，它不会就这么复制整个工作目录。实际上它把每次提交都记录为一个相对于上个版本变化的集合，或者说一个\"差异 （delta）\"集。这也是为什么绝大部分提交都有一个父对象（parent commit） -- 迟点你就会在我们的演示中看见了。",
+              "",
+              "假如你要克隆（clone）一个仓库，你就要去解包（unpack）或者“解决（resolve）”这些差异。所以当你克隆一个仓库时会在命令行下看见这样的命令：",
+              "",
+              "`resolving deltas`（訳：差分を解決中）",
+              "",
+              "要完全理解这些概念可能要花费很多时间，但现在你可以把提交看作是项目的快照，提交非常轻量而且在它们之间切换的时候非常快。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "让我们在练习里好好了解提交是什么玩意。在右边展示的是一个使用 git 管理的（小）仓库。现在有两个提交 —— 一个是初始提交 `C0`，另外一个可能包含了一些有意义修改的提交是`C1`。",
+              "",
+              "点下面的按钮来生成一个新的提交。"
+            ],
+            "command": "git commit",
+            "afterMarkdowns": [
+              "看！碉堡吧！我们刚刚对这个仓库进行了一点修改，并且把这些修改提交了。我们刚刚做的提交有一个爸爸（parent），叫 `C1`，代表这个修改是基于`C1`的。"
+            ],
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "接下来你可以继续尝试下。在这个窗口关闭之后，提交两遍就可以过关！"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+
+});
+require("/src/levels/intro/commits.js");
+
+require.define("/src/levels/intro/merging.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C2\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\",\"C2\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "solutionCommand": "git checkout -b bugFix;git commit;git checkout master;git commit;git merge bugFix",
   "name": {
     "en_US": "Merging in Git",
     "fr_FR": "Faire des 'merge' (fusions de branches) avec Git",
     "ko": "Git에서 브랜치 합치기(Merge)",
+    "ja": "ブランチとマージ",
     "zh_CN": "Git合并(Merge)"
   },
   "hint": {
     "en_US": "指示された順番でコミットすること（masterの前にbugFixで）",
+    "ja": "指示された順番でコミットすること（masterの前にbugFixで）",
     "fr_FR": "Pensez à faire des commits dans l'ordre indiqué (bugFix avant master)",
     "zh_CN": "记得按照给定的顺序来进行提交(commit) （bugFix 要在 master 之前）",
     "ko": "말씀드린 순서대로 커밋해주세요 (bugFix에 먼저 커밋하고 master에 커밋)"
@@ -32686,6 +33441,75 @@ require.define("/src/levels/intro/3.js",function(require,module,exports,__dirnam
               "* `bugFix`という名前で新しいブランチを切る",
               "* `git checkout bugFix`コマンドで`bugFix`ブランチをチェックアウトする",
               "* 一回だけコミットする",
+              "* `git checkout`で`master`へ戻る",
+              "* もう1回コミットする",
+              "* `git merge`コマンドを使って、`bugFix`ブランチを`master`ブランチへとマージする",
+              "",
+              "*注：\"help level\"コマンドでこのヘルプにいつでも戻ってこれます*"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ブランチとマージ",
+              "",
+              "いい調子ですね。これまでにコミットとブランチについて学びました。そろそろ2つのブランチを1つにまとめるやり方について見ていきましょう。これができれば新しいフィーチャの開発のために新しいブランチを切って、開発が終わったら変更を元のブランチへ統合することができるようになります。",
+              "",
+              "はじめに紹介するのは、`git merge`を使ったマージのやり方です。mergeコマンドによって、2つの独立した親を持つ特別なコミットを作ることができます。2つの親を持つコミットが持つ意味とは、「全く別々の場所にいるこの親とその親（*かつ*、それらの親の祖先全て）が持つ全ての変更を含んでいますよ」ということです。",
+              "",
+              "見てみた方が早いので、次の画面で確認してみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "それぞれ別のコミットを指している2つのブランチがあります。変更が別々のブランチに分散していて統合されていないケースです。これをマージで1つにまとめてみましょう。",
+              "",
+              "`bugFix`ブランチを`master`ブランチにマージしてみます。"
+            ],
+            "afterMarkdowns": [
+              "わあ。見ましたか？まず初めに、`master`ブランチが2つのコミットを親に持つ新しいコミットを指してますね。`master`から親をたどっていくと、最も古いコミットにたどり着くまでに全てのコミットを含んでいる様が確認できます。これで、全ての変更を含む`master`が完成しました。",
+              "",
+              "色がどう変わったかにも注目して下さい。学習を助けるために、ブランチ毎に色をつけています。それぞれのブランチは自分の色を持っていて、どのブランチから派生して出てくるか次第でコミットごとの色が決まります。",
+              "",
+              "今回のコミットには`master`ブランチの色が使われました。しかし`bugFix`ブランチの色がまだ変わってないようなので、これを変えてみましょう。"
+            ],
+            "command": "git merge bugFix",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "`master`ブランチを`bugFix`ブランチにマージしてみます。"
+            ],
+            "afterMarkdowns": [
+              "`bugFix`ブランチは`master`ブランチの派生元だったので、gitは実際大したことはしていません：`bugFix`ブランチを指していたポインタを`master`が指していたコミットへと移動させただけです。",
+              "",
+              "これで全てのコミットが同じ色になりました。つまり、リポジトリの中の全ての変更をそれぞれのブランチが持ったことになります。やったね！"
+            ],
+            "command": "git checkout bugFix; git merge master",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit; git merge bugFix"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "以下の作業で理解度の確認をしてみましょう。 steps:",
+              "",
+              "* `bugFix`という名前で新しいブランチを切る",
+              "* `git checkout bugFix`コマンドで`bugFix`ブランチをチェックアウトする",
+              "* 一回だけコミット",
               "* `git checkout`で`master`へ戻る",
               "* もう1回コミットする",
               "* `git merge`コマンドを使って、`bugFix`ブランチを`master`ブランチへとマージする",
@@ -32907,19 +33731,21 @@ require.define("/src/levels/intro/3.js",function(require,module,exports,__dirnam
 };
 
 });
-require("/src/levels/intro/3.js");
+require("/src/levels/intro/merging.js");
 
-require.define("/src/levels/intro/4.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/intro/rebasing.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%22%2C%22id%22%3A%22master%22%7D%2C%22bugFix%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22bugFix%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C3%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22bugFix%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git checkout -b bugFix;git commit;git checkout master;git commit;git checkout bugFix;git rebase master",
   "name": {
     "en_US": "Rebaseの解説",
+    "ja": "Rebaseの解説",
     "fr_FR": "Introduction à rebase",
     "ko": "리베이스(rebase)의 기본",
     "zh_CN": "介绍衍合(rebase)"
   },
   "hint": {
     "en_US": "初めにbugFixを指した状態でコミットする",
+    "ja": "初めにbugFixを指した状態でコミットする",
     "fr_FR": "Assurez-vous de bien faire votre en premier votre commit sur bugFix",
     "ko": "bugFix 브랜치에서 먼저 커밋하세요",
     "zh_CN": "确保你先在 bugFix 分支进行提交"
@@ -32986,6 +33812,73 @@ require.define("/src/levels/intro/4.js",function(require,module,exports,__dirnam
               "",
               "* `bugFix`という名前の新しいブランチをチェックアウトする",
               "* 一回だけコミットする",
+              "* masterブランチに戻ってもう1回コミット",
+              "* bugFixをもう1回チェックアウトして、master上にリベース",
+              "",
+              "幸運を祈る！"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Git Rebase",
+              "",
+              "ブランチを一つにまとめる方法として前回はマージを紹介しましたが、今回紹介するリベースを使うこともできます。リベースの動作は、マージするコミットのコピーをとって、どこかにストンと落とすというイメージです。",
+              "",
+              "ピンと来ないかもしれませんが、リベースのメリットは一本の連続したシーケンシャルなコミットに整形できることです。リベースだけ使っていると、コミットのログや履歴が非常にクリーンな状態に保たれます。",
+              "",
+              "早速実際にどう動くのかを見てみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "前回と同様の2つのブランチを考えます：仮にいまbugFixブランチをチェックアウトしているとします。（アスタリスクつきのもの）",
+              "",
+              "bugFixに入ってる作業内容をそのまま直接masterブランチ上の内容に移動したいとします。こうすることで、実際には並行して開発された2つの別々のブランチ上のフィーチャを、あたかも1本のブランチ上でシーケンシャルに開発されていたかのように見せることができます。",
+              "",
+              "`git rebase`コマンドでそれをやってみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できた！これでbugFixブランチの作業内容はmasterブランチのすぐ先に移動したので、見た目が一本になってスッキリしました。",
+              "",
+              "気を付けてほしいのは、C3コミットはどこかに残ってるということ（ツリーの中で半透明にしてあります）、そしてC3'は（C3との接続が切れているC3の）コピーがmasterブランチ上に作られているということです。",
+              "",
+              "一つ問題が残ってて、masterブランチがまだ最新化されていませんね。ちょっと直してみましょう。。"
+            ],
+            "command": "git rebase master",
+            "beforeCommand": "git commit; git checkout -b bugFix C1; git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "masterブランチはチェックアウトしてあります。この状態からmasterブランチを`bugFix`へとリベースしてみましょう。"
+            ],
+            "afterMarkdowns": [
+              "できた！`master`は`bugFix`の直前のコミットだったので、gitは単純に`master`ブランチのポインタを前に進めただけでした。"
+            ],
+            "command": "git rebase bugFix",
+            "beforeCommand": "git commit; git checkout -b bugFix C1; git commit; git rebase master; git checkout master"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "以下の作業で理解度の確認をしてみましょう。",
+              "",
+              "* `bugFix`という名前の新しいブランチをチェックアウトする",
+              "* 一回だけコミット",
               "* masterブランチに戻ってもう1回コミット",
               "* bugFixをもう1回チェックアウトして、master上にリベース",
               "",
@@ -33198,10 +34091,17 @@ require.define("/src/levels/intro/4.js",function(require,module,exports,__dirnam
 };
 
 });
-require("/src/levels/intro/4.js");
+require("/src/levels/intro/rebasing.js");
 
-require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "compareOnlyMasterHashAgnostic": true,
+require.define("/src/levels/mixed/grabbingOneCommit.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C4 > data.C1;
+      }
+    ]
+  },
   "disabledMap": {
     "git revert": true
   },
@@ -33211,15 +34111,58 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
   "name": {
     "ko": "딱 한개의 커밋만 가져오기",
     "en_US": "Grabbing Just 1 Commit",
+    "ja": "Grabbing Just 1 Commit",
     "zh_CN": "私藏一个提交"
   },
   "hint": {
     "en_US": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
+    "ja": "このレベルではインタラクティブモードのrebaseやcherry-pickがクリアのカギです",
     "ko": "대화식 리베이스(rebase -i)나 or 체리픽(cherry-pick)을 사용하세요",
     "zh_CN": "记住，交互式 rebase 或者 cherry-pick 会很有帮助"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ローカルに積み上がったコミット",
+              "",
+              "実際の開発ではこういうケースがよくあります：「バグの原因調査を試みているがバグの再現性がかなり低い。調査の補助のために、いくつかのデバッグ用の命令やprint文を差し込んでいる。」",
+              "",
+              "これらのデバッグ用のコードはバグ修正用のブランチにコミットされています。そしてついにバグの原因を突き止めて、修正した！やった！",
+              "",
+              "あとは`bugFix`ブランチを`master`ブランチに統合できればOK。そこで単純に`master`をfast-forwardすればよいかというと、それでは`master`ブランチの中にデバッグ用のコードも混入してしまいます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "ここでGitの魔法が力を発揮します。解決のためにはいくつかの方法がありますが、最も素直な解決方法は2つあって：",
+              "",
+              "* `git rebase -i`",
+              "* `git cherry-pick`",
+              "",
+              "インタラクティブモードの（`-i`オプションつきの）rebaseによって、保持したいコミットと破棄したいコミットを選り分けることができます。コミットの順序を変更することも可能です。この方法は、一部の変更をどこかへやってしまいたい時に便利です。",
+              "",
+              "もう一方のcherry-pickを使うと、持っていきたいコミットを選んで`HEAD`の先にストンと落とすことができます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "後半の章ですのでどう解決するかをもう自分で考えることができると思います。このレベルをクリアするためには、`bugFix`が持っているコミットを`master`ブランチが受け取る必要がある点には注意してください。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -33346,29 +34289,82 @@ require.define("/src/levels/mixed/1.js",function(require,module,exports,__dirnam
 };
 
 });
-require("/src/levels/mixed/1.js");
+require("/src/levels/mixed/grabbingOneCommit.js");
 
-require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/mixed/jugglingCommits.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "disabledMap": {
     "git cherry-pick": true,
     "git revert": true
   },
-  "compareOnlyMaster": true,
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C2 > data.C3;
+      },
+      function(data) {
+        return data.C2 > data.C1;
+      }
+    ]
+  },
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%27%27%22%2C%22id%22%3A%22master%22%7D%2C%22newImage%22%3A%7B%22target%22%3A%22C2%22%2C%22id%22%3A%22newImage%22%7D%2C%22caption%22%3A%7B%22target%22%3A%22C3%27%27%22%2C%22id%22%3A%22caption%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C3%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%27%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C3%27%22%5D%2C%22id%22%3A%22C2%27%22%7D%2C%22C2%27%27%22%3A%7B%22parents%22%3A%5B%22C3%27%22%5D%2C%22id%22%3A%22C2%27%27%22%7D%2C%22C2%27%27%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%27%27%22%7D%2C%22C3%27%27%22%3A%7B%22parents%22%3A%5B%22C2%27%27%27%22%5D%2C%22id%22%3A%22C3%27%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22master%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git rebase -i HEAD~2;git commit --amend;git rebase -i HEAD~2;git rebase caption master",
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"newImage\":{\"target\":\"C2\",\"id\":\"newImage\"},\"caption\":{\"target\":\"C3\",\"id\":\"caption\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"caption\",\"id\":\"HEAD\"}}",
   "name": {
     "ko": "커밋들 갖고 놀기",
     "en_US": "Juggling Commits",
+    "ja": "Juggling Commits",
     "zh_CN": "提交变换戏法"
   },
   "hint": {
     "en_US": "最初に打つコマンドはgit rebase -i HEAD~2",
+    "ja": "最初に打つコマンドはgit rebase -i HEAD~2",
     "ko": "첫번째 명령은 git rebase -i HEAD~2 입니다",
     "zh_CN": "第一个命令是 'git rebase -i HEAD~2'"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Commitsをやりくりする",
+              "",
+              "開発中に頻繁に起こるケースをもう1つ考えます。ある変更（`newImage`）とまた別の変更（`caption`）があって、それらに依存関係があるとします。この一連の変更が一列に積み重なっているとします。",
+              "",
+              "ここでトリッキーなのは、以前のコミットに対して微修正をかけなければならないケースがあるということです。今回の教材でも、過去のコミットであるにも関わらず`newImage`ブランチに僅かな修正を加えるような設計の修正が入ったとしましょう。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "この困難な状況を、以下の手順で克服することを考えます：",
+              "",
+              "* `git rebase -i`を使って順番を変更する。これで、変更をかけたいコミットを一番先頭に持ってくる。",
+              "* `commit --amend`コマンドで僅かな変更を行う",
+              "* `git rebase -i`コマンドを再度使って、先頭に持ってきていたコミットを元に戻す",
+              "* 最後に、レベルクリアのためにmasterブランチを先頭に持ってくる",
+              "",
+              "クリアのための方法はいくつもありますが（cherry-pickを使うこともできます）、別の回答はまた後程の章で見ることにして、今回は上記の方法でやってみることにしましょう。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "最後に、ゴール時点での状態に気を付けてください。今回2回ほどコミットを動かしますから、コミットへのポインタにはアポストロフィ（'）が追加されます。commit --amendコマンドの実行でできたコミットには更にもう1つのアポストロフィが追加されます。 ",
+              "",
+              "That being said, I can compare levels now based on structure and relative apostrophe differences. As long as your tree's `master` branch has the same structure and relative apostrophe differences, I'll give full credit"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -33489,23 +34485,35 @@ require.define("/src/levels/mixed/2.js",function(require,module,exports,__dirnam
 };
 
 });
-require("/src/levels/mixed/2.js");
+require("/src/levels/mixed/jugglingCommits.js");
 
-require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/mixed/jugglingCommits2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C3%27%22%2C%22id%22%3A%22master%22%7D%2C%22newImage%22%3A%7B%22target%22%3A%22C2%22%2C%22id%22%3A%22newImage%22%7D%2C%22caption%22%3A%7B%22target%22%3A%22C3%22%2C%22id%22%3A%22caption%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%22%7D%2C%22C2%27%27%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%27%27%22%7D%2C%22C3%27%22%3A%7B%22parents%22%3A%5B%22C2%27%27%22%5D%2C%22id%22%3A%22C3%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22master%22%2C%22id%22%3A%22HEAD%22%7D%7D",
   "solutionCommand": "git checkout master;git cherry-pick C2;git commit --amend;git cherry-pick C3",
   "disabledMap": {
     "git revert": true
   },
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"newImage\":{\"target\":\"C2\",\"id\":\"newImage\"},\"caption\":{\"target\":\"C3\",\"id\":\"caption\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C2\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"caption\",\"id\":\"HEAD\"}}",
-  "compareOnlyMaster": true,
+  "compareOnlyMasterHashAgnosticWithAsserts": true,
+  "goalAsserts": {
+    "master": [
+      function(data) {
+        return data.C2 > data.C3;
+      },
+      function(data) {
+        return data.C2 > data.C1;
+      }
+    ]
+  },
   "name": {
     "ko": "커밋 갖고 놀기 #2",
     "en_US": "コミットをやりくりする その2",
+    "ja": "コミットをやりくりする その2",
     "zh_CN": "提交交换戏法 #2"
   },
   "hint": {
     "en_US": "masterのポインタを先に進めることを忘れずに！",
+    "ja": "masterのポインタを先に進めることを忘れずに！",
     "ko": "master를 변경 완료한 커밋으로 이동(forward)시키는 것을 잊지 마세요!",
     "zh_CN": "别忘记了将 master 快进到最新的更新上！"
   },
@@ -33517,6 +34525,49 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
           "options": {
             "markdowns": [
               "## Commitsをやりくりする #2",
+              "",
+              "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
+              "",
+              "前回見てきたように、コミット順序の変更のために、私たちは`rebase -i`コマンドを利用しました。ツリーの先頭に変更対象のコミットがあれば、--amendオプションを使うことで容易に変更を書きかえて、元の順序に戻すことができます。",
+              "",
+              "この場合に心配なことが一つだけあって、それは複数回の順序の変更が行われるので、rebaseのコンフリクト（衝突）が起こりうることです。こういうケースへの対策として、`git cherry-pick`を使った別の解決法について考えてみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "git cherry-pickを使うと、ツリーの中から複数のコミットを選んで、HEADの下に新しく作ることができましたね。",
+              "",
+              "簡単なデモを見てみましょう："
+            ],
+            "afterMarkdowns": [
+              "できました！次へ進みましょう"
+            ],
+            "command": "git cherry-pick C2",
+            "beforeCommand": "git checkout -b bugFix; git commit; git checkout master; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "このレベルでは、`C2`をamendすることで前回と同じ目的を達成しましょう。但し`rebase -i`は使わずにクリアしてください。どんな方法で進めるかはあなたにおまかせします！:D",
+              "",
+              "Remember, the exact number of apostrophe's (') on the commit are not important, only the relative differences. For example, I will give credit to a tree that matches the goal tree but has one extra apostrophe everywhere"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## コミットをやりくりする その2",
               "",
               "*注意 この一つ前のレベル「コミットをやりくりする」をクリアしていない人は、まずそちらの問題をクリアしてきてください*",
               "",
@@ -33636,26 +34687,347 @@ require.define("/src/levels/mixed/3.js",function(require,module,exports,__dirnam
   }
 };
 });
-require("/src/levels/mixed/3.js");
+require("/src/levels/mixed/jugglingCommits2.js");
 
-require.define("/src/levels/rampup/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
-  "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22master%22%7D%2C%22pushed%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22pushed%22%7D%2C%22local%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22local%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22pushed%22%2C%22id%22%3A%22HEAD%22%7D%7D",
-  "solutionCommand": "git reset HEAD~1;git checkout pushed;git revert HEAD",
-  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"pushed\":{\"target\":\"C2\",\"id\":\"pushed\"},\"local\":{\"target\":\"C3\",\"id\":\"local\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"local\",\"id\":\"HEAD\"}}",
+require.define("/src/levels/rampup/detachedHead.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"C4\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git checkout C4",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
-    "en_US": "変更を元に戻す",
-    "fr_FR": "Annuler des changements avec Git",
-    "ko": "Git에서 작업 되돌리기",
-    "zh_CN": "Git撤销改变"
+    "en_US": "HEADを理解する"
   },
   "hint": {
-    "en_US": "",
-    "fr_FR": "",
-    "zh_CN": "",
-    "ko": ""
+    "en_US": "ラベル(ハッシュ)を使いましょう"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## Gitの基礎固め",
+              "",
+              "Gitの先進的なフィーチャについて学ぶ前に、ツリーの中を自在に移動できるようになっておくと便利です。",
+              "",
+              "ひとたび自在に動き回れるようになれば、これから学ぶ他のgitコマンドの威力が倍増するでしょう。",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## HEAD",
+              "",
+              "まず\"HEAD\"についてお話します。HEADはいまチェックアウトされているコミットを指す時の呼び方です -- これはあなたが今どのコミットで作業しているかを意味します。",
+              "",
+              "HEADは常にツリー上の最後のコミットを指しています。ツリーに変化をもたらすほとんどのgitコマンドは、このHEADを動かすことからその動作を始めます。",
+              "",
+              "通常HEADは（bugFixといったような）ブランチ名を指しています。あなたがコミットすると、このbugFixブランチの状態が変化しますが、HEADはこの変化を指すように動きます。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "動きを確認してみましょう。コミットする前とした後の都合2回、HEADを出現させます。"
+            ],
+            "afterMarkdowns": [
+              "わかりましたか？`master`ブランチの下にずっとHEADが隠れていました。"
+            ],
+            "command": "git checkout C1; git checkout master; git commit; git checkout C2",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "### HEADを出現させる",
+              "",
+              "HEADの向き先をブランチではなくてコミットに変えることで、HEADを出現させることができます。前はこうだったのを：",
+              "",
+              "HEAD -> master -> C1",
+              ""
+            ],
+            "afterMarkdowns": [
+              "こう変えてやります。",
+              "",
+              "HEAD -> C1"
+            ],
+            "command": "git checkout C1",
+            "beforeCommand": ""
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "このレベルの仕上げに、HEADの向き先を`bugFix`からコミットに変えてみて、理解を確認してみましょう。",
+              "",
+              "向き先を変えるには、コミットのハッシュを指定します。learn Git Branchingでは簡便のためにハッシュをCで始まる文字列で表現しています。"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+require("/src/levels/rampup/detachedHead.js");
+
+require.define("/src/levels/rampup/relativeRefs.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"C3\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git checkout bugFix^",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C4\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C3\"],\"id\":\"C4\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
+  "name": {
+    "en_US": "コミットの相対的な指定 (^)"
+  },
+  "hint": {
+    "en_US": "(^)オペレータを思い出して！"
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## コミットの相対的な指定",
+              "",
+              "実際のGitの運用では、ハッシュ名を指定してツリーを動き回ることは少し骨が折れます。Gitのツリー構造が見事にグラフィカルに表現されるわけではないので、ハッシュを見つけるためには`git log`を叩く必要が出てきます。",
+              "",
+              "更には、ハッシュ名は実際のGitの世界では通常はもっと長い文字列です。例えば、`fed2da64c0efc5293610bdd892f82a58e8cbc5d8`のように。舌が追いつきませんね。。。",
+              "",
+              "幸い、Gitにはハッシュを便利に扱うための機能があります。ハッシュ名の全部を指定する必要はなく、どのハッシュかを特定するに足るだけの文字列を与えればよいのです。つまり前述の長いハッシュの代わりに、`fed2`とタイプします。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "それでもやっぱりハッシュの指定は少し大変なので、相対的な指定の出番です。これは素晴らしいですよ！",
+              "",
+              "相対的な指定では、どこか記憶しやすい場所（`bugFix`ブランチや`HEAD`など）で作業することになります。",
+              "",
+              "コミットの相対的な指定はパワフルな機能ですが、ここではシンプルな2つの方法の紹介に留めます：",
+              "",
+              "* `^`オペレータを使って一回で一つの前のコミットを指定",
+              "* `~<num>`オペレータを使って任意の個数分前のコミットを指定"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "ハット（^）オペレータについて見てましょう。オペレータを追加することで、今指定してるコミットの親コミットを見つけるようGitに指示することができます。",
+              "",
+              "例えば`master^`と書くと`master`の最初の親コミットを指すことができます。",
+              "",
+              "`master^^`とすれば`master`のおじいちゃんコミットを指します。",
+              "",
+              "masterの親コミットをチェックアウトしてみましょう。"
+            ],
+            "afterMarkdowns": [
+              "じゃん！できました。ハッシュ名を打ち込むよりも簡単なことがわかります。"
+            ],
+            "command": "git checkout master^",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "相対的な指定をする際に、`HEAD`を使うこともできます。何回か使ってみて、ツリー内を移動してみましょう。"
+            ],
+            "afterMarkdowns": [
+              "簡単ですね！`HEAD^`と打つことで移動することができました。"
+            ],
+            "command": "git checkout C3; git checkout HEAD^; git checkout HEAD^; git checkout HEAD^",
+            "beforeCommand": "git commit; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "実際に手を動かしてみましょう。`bugFix`の親コミットをチェックアウトします。`HEAD`を出現させるのです。",
+              "",
+              "ハッシュ名の指定でも同じことができますが、相対的な指定の方を試してみましょう！"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+require("/src/levels/rampup/relativeRefs.js");
+
+require.define("/src/levels/rampup/relativeRefs2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "{\"branches\":{\"master\":{\"target\":\"C6\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C0\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C3\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"}},\"HEAD\":{\"target\":\"C1\",\"id\":\"HEAD\"}}",
+  "solutionCommand": "git branch -f master C6;git checkout HEAD~1;git branch -f bugFix HEAD~1",
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C4\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C5\",\"id\":\"bugFix\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C2\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C3\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"}},\"HEAD\":{\"target\":\"C2\",\"id\":\"HEAD\"}}",
+  "hint": {
+    "en_US": "レベルクリアのためには、最低1回はハッシュ名をタイプする必要があります"
+  },
+  "name": {
+    "en_US": "コミットの相対的な指定 2つ目 (~)"
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### \"~\"オペレータ",
+              "",
+              "仮にいくつも前のコミットへと移動する必要があるとします。`^`を何回もタイプするのは骨が折れる場合もありますから、こんな時のためにGitにはチルダ(~)オペレータがあります。",
+              "",
+              "",
+              "チルダの後に移動したい数を入力して使います。これも動きをみてみましょう。"
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "チルダの後ろに数字をつけてコミットを指定しています。"
+            ],
+            "afterMarkdowns": [
+              "じゃん！これはシンプル -- 相対的な指定は素晴らしいですね。"
+            ],
+            "command": "git checkout HEAD~4",
+            "beforeCommand": "git commit; git commit; git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### Branch forcing",
+              "",
+              "これであなたも相対的な指定の達人です。実践に入りましょう。",
+              "",
+              "私が相対的な指定を最も活用する時は、ブランチを動かす時です。（git branchコマンドの）`-f`オプションを使えば、ブランチ名を直接あるコミットへと付け直すことができます。例えば：",
+              "",
+              "`git branch -f master HEAD~3`",
+              "",
+              "こうすれば、masterブランチをHEADから数えて3個前の親コミットへと強制的に移動することができます。"
+            ]
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "`HEAD`、`master`それから`bugFix`をそれぞれ所定の位置へと移動させて、このレベルをクリアしましょう。"
+            ]
+          }
+        }
+      ]
+    }
+  }
+};
+});
+require("/src/levels/rampup/relativeRefs2.js");
+
+require.define("/src/levels/rampup/reversingChanges.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+  "goalTreeString": "%7B%22branches%22%3A%7B%22master%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22master%22%7D%2C%22pushed%22%3A%7B%22target%22%3A%22C2%27%22%2C%22id%22%3A%22pushed%22%7D%2C%22local%22%3A%7B%22target%22%3A%22C1%22%2C%22id%22%3A%22local%22%7D%7D%2C%22commits%22%3A%7B%22C0%22%3A%7B%22parents%22%3A%5B%5D%2C%22id%22%3A%22C0%22%2C%22rootCommit%22%3Atrue%7D%2C%22C1%22%3A%7B%22parents%22%3A%5B%22C0%22%5D%2C%22id%22%3A%22C1%22%7D%2C%22C2%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C2%22%7D%2C%22C3%22%3A%7B%22parents%22%3A%5B%22C1%22%5D%2C%22id%22%3A%22C3%22%7D%2C%22C2%27%22%3A%7B%22parents%22%3A%5B%22C2%22%5D%2C%22id%22%3A%22C2%27%22%7D%7D%2C%22HEAD%22%3A%7B%22target%22%3A%22pushed%22%2C%22id%22%3A%22HEAD%22%7D%7D",
+  "solutionCommand": "git reset HEAD~1;git checkout pushed;git revert HEAD",
+  "compareOnlyBranches": true,
+  "startTree": "{\"branches\":{\"master\":{\"target\":\"C1\",\"id\":\"master\"},\"pushed\":{\"target\":\"C2\",\"id\":\"pushed\"},\"local\":{\"target\":\"C3\",\"id\":\"local\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"}},\"HEAD\":{\"target\":\"local\",\"id\":\"HEAD\"}}",
+  "name": {
+    "en_US": "変更を元に戻す",
+    "ja": "変更を元に戻す",
+    "fr_FR": "Annuler des changements avec Git",
+    "ko": "Git에서 작업 되돌리기",
+    "zh_CN": "Git 里的撤销改变"
+  },
+  "hint": {
+    "en_US": "Notice that revert and reset take different arguments.",
+    "fr_FR": "",
+    "zh_CN": "",
+    "ko": "",
+    "ja": ""
+  },
+  "startDialog": {
+    "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## 変更を元に戻す",
+              "",
+              "Gitでは変更を元に戻す方法がたくさんあります。コミットと同じように、低レベルな動作（ファイル別だったりファイルの中の一部だったり）も高レベルな動作（変更のまとまりのキャンセル）もできます。このアプリケーションでは後者の方法について紹介します。",
+              "",
+              "基本的なアンドゥの方法が2つあります - 一つは`git reset`を使う方法で、もう1つは`git revert`を使う方法です。次のダイアログで一つ一つを見ていきます。",
+              ""
+            ]
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "## Git Reset",
+              "",
+              "`git reset`はブランチのポインタを後方に移動することで変更のキャンセルを実現します。履歴を上書きするような動作だと思うと良いでしょうか：`git reset`はそもそも前のコミットなんかなかったかのように、ブランチのポインタを元に戻してくれます。",
+              "",
+              "どういう感じか見てみましょう。"
+            ],
+            "afterMarkdowns": [
+              "いいですね！Gitは単純にmasterブランチへのポインタを`C1`へ戻しました。これでこのローカルリポジトリにはまるで`C2`なんて無かったかのように変更をキャンセルできました。"
+            ],
+            "command": "git reset HEAD~1",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "GitDemonstrationView",
+          "options": {
+            "beforeMarkdowns": [
+              "## Git Revert",
+              "",
+              "自分のマシン上のブランチではさっきの`git reset`でうまくいきましたが、この「履歴を上書きする」手段は、他の人も使っているリモートにあるリポジトリに対しては使うことができません。",
+              "",
+              "変更を巻き戻して他の人とそれを共有するためには、`git revert`を使う必要があります。今度はこれを見てみましょう。"
+            ],
+            "afterMarkdowns": [
+              "あれ、おかしいな。巻き戻したいと思ってたコミットの下に新しいコミットが出来上がってしまったみたいです。なぜか。これは、この新しい`C2'`コミットは`C2`へ戻すのに必要な内容を確かに変更して巻き戻していたのです。",
+              "",
+              "こんな風にして、巻き戻した内容を他人と共有するためにはrevertを使います。"
+            ],
+            "command": "git revert HEAD",
+            "beforeCommand": "git commit"
+          }
+        },
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "この章の仕上げに、`local`と`pushed`の両方の直近のコミットを巻き戻してみましょう。",
+              "",
+              "`pushed`はリモートのブランチで、`local`はローカルであることに注意。正しくコマンドを使い分けましょう。"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -33911,9 +35283,9 @@ require.define("/src/levels/rampup/2.js",function(require,module,exports,__dirna
 };
 
 });
-require("/src/levels/rampup/2.js");
+require("/src/levels/rampup/reversingChanges.js");
 
-require.define("/src/levels/rebase/1.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/rebase/manyRebases.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "compareOnlyMasterHashAgnostic": true,
   "disabledMap": {
     "git revert": true
@@ -33922,17 +35294,37 @@ require.define("/src/levels/rebase/1.js",function(require,module,exports,__dirna
   "solutionCommand": "git checkout bugFix;git rebase master;git checkout side;git rebase bugFix;git checkout another;git rebase side;git rebase another master",
   "startTree": "{\"branches\":{\"master\":{\"target\":\"C2\",\"id\":\"master\"},\"bugFix\":{\"target\":\"C3\",\"id\":\"bugFix\"},\"side\":{\"target\":\"C6\",\"id\":\"side\"},\"another\":{\"target\":\"C7\",\"id\":\"another\"}},\"commits\":{\"C0\":{\"parents\":[],\"id\":\"C0\",\"rootCommit\":true},\"C1\":{\"parents\":[\"C0\"],\"id\":\"C1\"},\"C2\":{\"parents\":[\"C1\"],\"id\":\"C2\"},\"C3\":{\"parents\":[\"C1\"],\"id\":\"C3\"},\"C4\":{\"parents\":[\"C0\"],\"id\":\"C4\"},\"C5\":{\"parents\":[\"C4\"],\"id\":\"C5\"},\"C6\":{\"parents\":[\"C5\"],\"id\":\"C6\"},\"C7\":{\"parents\":[\"C5\"],\"id\":\"C7\"}},\"HEAD\":{\"target\":\"master\",\"id\":\"HEAD\"}}",
   "name": {
-    "ko": "9천번이 넘는 리베이스",
     "en_US": "Rebasing over 9000 times",
+    "ko": "9천번이 넘는 리베이스",
+    "ja": "Rebasing over 9000 times",
     "zh_CN": "衍合一百遍啊一百遍"
   },
   "hint": {
     "en_US": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
+    "ja": "最も効率的なやり方はmasterを最後に更新するだけかもしれない・・・",
     "ko": "아마도 master를 마지막에 업데이트하는 것이 가장 효율적인 방법일 것입니다...",
     "zh_CN": "记住，可能最终最高效的方法就是更新主分支（master）……"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "### 複数のブランチをリベースする",
+              "",
+              "さあ、いくつものブランチが出てきます。このブランチたち全てをmasterブランチにリベースしましょう。",
+              "",
+              "おエライさん方が今回の仕事を少しトリッキーにしてくれました ― コミットはすべて一列のシーケンシャルな状態にしてほしいそうです。つまり私たちが作るリポジトリの最終的なツリーの状態は、`C7'`が最後に来て、`C6'`がその一つ上に来て、、と順に積み重なるイメージです。",
+              "",
+              "試行錯誤してツリーが汚くなってきたら、`reset`コマンドを使ってツリーの状態を初期化してください。模範解答をチェックして、それよりも簡単なコマンドで済ませられるかどうか、を考えるのも忘れずに！"
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -33989,9 +35381,9 @@ require.define("/src/levels/rebase/1.js",function(require,module,exports,__dirna
   }
 };
 });
-require("/src/levels/rebase/1.js");
+require("/src/levels/rebase/manyRebases.js");
 
-require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
+require.define("/src/levels/rebase/selectiveRebase.js",function(require,module,exports,__dirname,__filename,process,global){exports.level = {
   "compareAllBranchesHashAgnostic": true,
   "disabledMap": {
     "git revert": true
@@ -34002,15 +35394,37 @@ require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirna
   "name": {
     "ko": "브랜치 스파게티",
     "en_US": "ブランチスパゲッティ",
+    "ja": "ブランチスパゲッティ",
     "zh_CN": "分支浆糊"
   },
   "hint": {
     "en_US": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
+    "ja": "全て正しい順番で処理すること！oneが最初で、次がtwo、最後にthreeを片付ける。",
     "ko": "이 문제를 해결하는 방법은 여러가지가 있습니다! 체리픽(cherry-pick)이 가장 쉽지만 오래걸리는 방법이고, 리베이스(rebase -i)가 빠른 방법입니다",
     "zh_CN": "确保你是按照正确的顺序来操作！先操作分支 `one`, 然后 `two`, 最后才是 `three`"
   },
   "startDialog": {
     "en_US": {
+      "childViews": [
+        {
+          "type": "ModalAlert",
+          "options": {
+            "markdowns": [
+              "## ブランチスパゲッティ",
+              "",
+              "なんということでしょう。今回のレベルクリアのために、やることがたくさんあります。",
+              "",
+              "いま`master`が指しているコミットの数個前のコミットに、ブランチ`one`、`two`それから`three`があります。何か事情があって、これらの3つのブランチをmasterが指している最新の状態に更新したいケースを考えます。",
+              "",
+              "ブランチ`one`に対しては、順序の変更と`C5`の削除が必要です。`two`では順序の変更のみ、`three`に対しては1回だけコミットすればOKです。",
+              "",
+              "`show solution`コマンドで模範解答を確認できますから、こちらも利用してください。 "
+            ]
+          }
+        }
+      ]
+    },
+    "ja": {
       "childViews": [
         {
           "type": "ModalAlert",
@@ -34074,6 +35488,6 @@ require.define("/src/levels/rebase/2.js",function(require,module,exports,__dirna
 };
 
 });
-require("/src/levels/rebase/2.js");
+require("/src/levels/rebase/selectiveRebase.js");
 
 })();

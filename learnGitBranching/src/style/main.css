@@ -73,6 +73,13 @@ body,
   box-flex: 3;
 }
 
+.flex10 {
+  -webkit-box-flex: 10;
+  -moz-box-flex: 10;
+  -ms-box-flex: 10;
+  box-flex: 10;
+}
+
 html,
 body,
 .vertical {
@@ -193,9 +200,9 @@ div.canvasTerminalHolder {
 }
 
 div.gitDemonstrationView > div.visHolder,
-#mainVisSpace {
-  background: #24A7FF;
-  background-color: #24A7FF;
+.visBackgroundColor {
+  background: #5cbcfc;
+  background-color: #5cbcfc;
 }
 
 #interfaceWrapper {
@@ -220,6 +227,7 @@ div.canvasTerminalHolder > div.terminal-window-holder.slideOut {
   -ms-transform: translate3d(-150%,0,0);
   transform: translate3d(-150%,0,0);
 }
+
 
 div.canvasTerminalHolder > div.terminal-window-holder > div.wrapper {
   margin: 0 20px 0px 20px;
@@ -259,10 +267,6 @@ div.canvasTerminalHolder > div.terminal-window-holder div.inside {
 
 div.canvasTerminalHolder > div.terminal-window-holder {
   max-width: 500px;
-}
-
-#controls {
-  background: #EEE;
 }
 
 /* Toolbar */
@@ -470,6 +474,7 @@ p.commandLine span.prompt {
 #commandLineHistory {
   margin: 10px;
   border-radius: 5px;
+  box-shadow: 1px 0px 15px rgba(100, 100, 100, 1);
 }
 
 #commandLineHistory #terminal.scrolling {
@@ -515,6 +520,55 @@ li.rebaseEntry,
 
 #terminal {
   border-bottom: 0;
+  padding: 0 5px;
+}
+
+.helperBar {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  background: #424242;
+  padding: 4px 10px;
+  border-radius: 5px 0 0 0;
+  border: 2px solid #EFEDEE;
+  border-bottom: 0;
+  border-right: 0;
+  box-shadow: -1px -1px 5px rgba(0,0,0,0.3);
+  font-weight: bold;
+}
+
+.helperBar i {
+  cursor: pointer;
+}
+
+.helperBar a {
+  cursor: pointer;
+  font-style: italic;
+}
+
+.helperBar a:after {
+  content: ' \b7';
+  font-style: normal;
+}
+
+.helperBar a:last-child:after {
+  content: '';
+}
+
+div.helperBar {
+  -webkit-transform: translate3d(150%,0,0);
+  -moz-transform: translate3d(150%,0,0);
+  -o-transform: translate3d(150%,0,0);
+  -ms-transform: translate3d(150%,0,0);
+  transform: translate3d(150%,0,0);
+}
+
+div.helperBar.show {
+  -webkit-transform: translate3d(0,0,0);
+  -moz-transform: translate3d(0,0,0);
+  -o-transform: translate3d(0,0,0);
+  -ms-transform: translate3d(0,0,0);
+  transform: translate3d(0,0,0);
 }
 
 #commandLineBar,

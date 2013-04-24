@@ -25,7 +25,7 @@ Nice! Git simply moved the master branch reference back to `C1`; now our local r
 ## Git Revert
 ## Git Revert
 
-While reseting works great for local branches on your own machine, it's method of \"rewriting history\" doesn't work for remote branches that others are using.
+While reseting works great for local branches on your own machine, its method of \"rewriting history\" doesn't work for remote branches that others are using.
 自分のマシン上のブランチではさっきの`git reset`でうまくいきましたが、この「履歴を上書きする」手段は、他の人も使っているリモートにあるリポジトリに対しては使うことができません。
 
 In order to reverse changes and *share* those reversed changes with others, we need to use `git revert`. Let's see it in action
@@ -40,6 +40,6 @@ With reverting, you can push out your changes to share with others.
 To complete this level, reverse the two most recent commits on both `local` and `pushed`.
 この章の仕上げに、`local`と`pushed`の両方の直近のコミットを巻き戻してみましょう。
 
-Keep in mind that `pushed` is a remote branch and `local` is a local branch -- that should help you chose your methods.
+Keep in mind that `pushed` is a remote branch and `local` is a local branch -- that should help you choose your methods.
 `pushed`はリモートのブランチで、`local`はローカルであることに注意。正しくコマンドを使い分けましょう。
 

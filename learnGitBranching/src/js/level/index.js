@@ -29,7 +29,8 @@ var regexMap = {
   'start dialog': /^start dialog$/,
   'show goal': /^(show goal|goal|help goal)$/,
   'hide goal': /^hide goal$/,
-  'show solution': /^show solution($|\s)/
+  'show solution': /^show solution($|\s)/,
+  'objective': /^(objective|assignment)$/
 };
 
 var parse = util.genParseCommand(regexMap, 'processLevelCommand');
@@ -75,6 +76,31 @@ var Level = Sandbox.extend({
     setTimeout(function() {
       deferred.resolve();
     }, this.getAnimationTime() * 1.2);
+  },
+
+  objectiveDialog: function(command, deferred, levelObj) {
+    levelObj = (levelObj === undefined) ? this.level : levelObj;
+
+    if (!levelObj || !levelObj.startDialog) {
+      command.set('error', new Errors.GitError({
+        msg: intl.str('no-start-dialog')
+      }));
+      deferred.resolve();
+      return;
+    }
+
+    var dialog = _.clone(intl.getStartDialog(levelObj));
+    // grab the last slide only
+    dialog.childViews = dialog.childViews.splice(-1);
+    new MultiView(_.extend(
+      dialog,
+      { deferred: deferred }
+    ));
+
+    // when its closed we are done
+    deferred.promise.then(function() {
+      command.set('status', 'finished');
+    });
   },
 
   startDialog: function(command, deferred) {
@@ -308,6 +334,7 @@ var Level = Sandbox.extend({
     }
 
     // TODO refactor this ugly ass switch statement...
+    // BIG TODO REALLY REFACTOR HAX HAX
     // ok so lets see if they solved it...
     var current = this.mainVis.gitEngine.exportTree();
     var solved;
@@ -319,6 +346,12 @@ var Level = Sandbox.extend({
       solved = this.treeCompare.compareAllBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString);
     } else if (this.level.compareOnlyMasterHashAgnostic) {
       solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+    } else if (this.level.compareOnlyMasterHashAgnosticWithAsserts) {
+      solved = this.treeCompare.compareBranchesWithinTreesHashAgnostic(current, this.level.goalTreeString, ['master']);
+      solved = solved && this.treeCompare.evalAsserts(
+        current,
+        this.level.goalAsserts
+      );
     } else {
       solved = this.treeCompare.compareAllBranchesWithinTreesAndHEAD(current, this.level.goalTreeString);
     }
@@ -487,7 +520,8 @@ var Level = Sandbox.extend({
       'hide goal': this.hideGoal,
       'show solution': this.showSolution,
       'start dialog': this.startDialog,
-      'help level': this.startDialog
+      'help level': this.startDialog,
+      'objective': this.objectiveDialog
     };
     var method = methodMap[command.get('method')];
     if (!method) {

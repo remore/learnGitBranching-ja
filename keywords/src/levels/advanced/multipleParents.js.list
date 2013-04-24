@@ -1,0 +1,53 @@
+Use `git branch bugWork` with a target commit to create the missing reference.
+対象のコミット上で`git branch bugWork`と打って足りない部分を補おう
+
+### Specifying Parents
+### 親を特定する
+
+Like the `~` modifier, the `^` modifier also accepts an optional number after it.
+`~`（チルダ）のように、`^`（キャレット）にも数字を与えることができます。
+
+Rather than specifying the number of generations to go back (what `~` takes), the modifier on `^` specifies which parent reference to follow from a merge commit. Remember that merge commits have multiple parents, so the path to choose is ambiguous.
+`~`（チルダ）の時は何世代前にさかのぼるかを指定しましたが、`^`（キャレット）ではどの親にさかのぼるかを指定します。コミットをマージすると複数の親コミットが生まれることを思い出してください。どの親へさかのぼるか、という問題は曖昧なのです。
+
+Git will normally follow the \"first\" parent upwards from a merge commit, but specifying a number with `^` changes this default behavior.
+Gitでは通常はマージの結果生まれたコミットの最初の親へとさかのぼりますが、`^`（キャレット）の後に数字を指定することでこのデフォルト動作を変更することができます。
+
+Enough talking, let's see it in action.
+説明はこれくらいにして、実際の動きを見てみましょう。
+
+Here we have a merge commit. If we checkout `master^` without the modifier, we will follow the first parent after the merge commit.
+ここにマージの結果生まれたコミットがあります。仮に数字なしで`master^`を指定すると、最初の親へとさかのぼります。
+
+(*In our visuals, the first parent is positioned directly above the merge commit.*)
+(*このツール上では、「最初の親」はコミットの真上に位置している親のことを指します*)
+
+Easy -- this is what we are all used to.
+一丁上がり -- この動作は見慣れてますよね。
+
+Now let's try specifying the second parent instead...
+次に第二の親を指定してみましょう。
+
+See? We followed the other parent upwards.
+わかりましたか？今度は別の親を指すようになりました。
+
+The `^` and `~` modifiers can make moving around a commit tree very powerful:
+`^`（キャレット）と`~`（チルダ）に数字を組み合わせて使うことで、非常にパワフルにgitツリー内を動き回ることが可能になります。
+
+Lightning fast!
+光の速さ！
+
+Even crazier, these modifiers can be chained together! Check this out:
+更に極めると、これらの修飾子をつなげて（chained）使うこともできます。見てみましょう；
+
+The same movement as before, but all in one command.
+前回と同じ動きですが、一回のコマンドで全てを実現しています。
+
+### Put it to practice
+### 実践でやってみる
+
+To complete this level, create a new branch at the specified destination.
+このレベルの仕上げに、指定された場所へ新しいブランチを作成してみましょう。
+
+Obviously it would be easy to specify the commit directly (with something like `C6`), but I challenge you to use the modifiers we talked about instead!
+`C6`のようにコミットのハッシュを指定する方が簡単なのは自明ですが、ここは敢えて今回学んだ修飾子たちを使って課題に挑戦してみてください。

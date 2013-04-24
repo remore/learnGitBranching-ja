@@ -1,0 +1,59 @@
+Relative Refs (^)
+コミットの相対的な指定 (^)
+
+Remember the Caret (^) operator!
+(^)オペレータを思い出して！
+
+## Relative Refs
+## コミットの相対的な指定
+
+Moving around in Git by specifying commit hashes can get a bit tedious. In the real world you won't have a nice commit tree visualization next to your terminal, so you'll have to use `git log` to see hashes.
+実際のGitの運用では、ハッシュ名を指定してツリーを動き回ることは少し骨が折れます。Gitのツリー構造が見事にグラフィカルに表現されるわけではないので、ハッシュを見つけるためには`git log`を叩く必要が出てきます。
+
+Furthermore, hashes are usually a lot longer in the real Git world as well. For instance, the hash of the commit that introduced the previous level is `fed2da64c0efc5293610bdd892f82a58e8cbc5d8`. Doesn't exactly roll off the tongue...
+更には、ハッシュ名は実際のGitの世界では通常はもっと長い文字列です。例えば、`fed2da64c0efc5293610bdd892f82a58e8cbc5d8`のように。舌が追いつきませんね。。。
+
+The upside is that Git is smart about hashes. It only requires you to specify enough characters of the hash until it uniquely identifies the commit. So I can type `fed2` instead of the long string above.
+幸い、Gitにはハッシュを便利に扱うための機能があります。ハッシュ名の全部を指定する必要はなく、どのハッシュかを特定するに足るだけの文字列を与えればよいのです。つまり前述の長いハッシュの代わりに、`fed2`とタイプします。
+
+Like I said, specifying commits by their hash isn't the most convenient thing ever, which is why Git has relative refs. They are awesome!
+それでもやっぱりハッシュの指定は少し大変なので、相対的な指定の出番です。これは素晴らしいですよ！
+
+With relative refs, you can start somewhere memorable (like the branch `bugFix` or `HEAD`) and work from there.
+相対的な指定では、どこか記憶しやすい場所（`bugFix`ブランチや`HEAD`など）で作業することになります。
+
+Relative commits are powerful, but we will introduce two simple ones here:
+コミットの相対的な指定はパワフルな機能ですが、ここではシンプルな2つの方法の紹介に留めます：
+
+Moving upwards one commit at a time with `^`
+`^`オペレータを使って一回で一つの前のコミットを指定
+
+Moving upwards a number of times with `~<num>`
+`~<num>`オペレータを使って任意の個数分前のコミットを指定
+
+Let's look at the Caret (^) operator first. Each time you append that to a ref name, you are telling Git to find the parent of the specified commit.
+ハット（^）オペレータについて見てましょう。オペレータを追加することで、今指定してるコミットの親コミットを見つけるようGitに指示することができます。
+
+So saying `master^` is equivalent to \"the first parent of `master`\".
+例えば`master^`と書くと`master`の最初の親コミットを指すことができます。
+
+`master^^` is the grandparent (second-generation ancestor) of `master`
+`master^^`とすれば`master`のおじいちゃんコミットを指します。
+
+Let's check out the commit above master here
+masterの親コミットをチェックアウトしてみましょう。
+
+Boom! Done. Way easier than typing the commit hash
+じゃん！できました。ハッシュ名を打ち込むよりも簡単なことがわかります。
+
+You can also reference `HEAD` as a relative ref. Let's use that a couple of times to move upwards in the commit tree
+相対的な指定をする際に、`HEAD`を使うこともできます。何回か使ってみて、ツリー内を移動してみましょう。
+
+Easy! We can travel backwards in time with `HEAD^`
+簡単ですね！`HEAD^`と打つことで移動することができました。
+
+To complete this level, check out the parent commit of `bugFix`. This will detach `HEAD`.
+実際に手を動かしてみましょう。`bugFix`の親コミットをチェックアウトします。`HEAD`を出現させるのです。
+
+You can specify the hash if you want, but try using relative refs instead!
+ハッシュ名の指定でも同じことができますが、相対的な指定の方を試してみましょう！

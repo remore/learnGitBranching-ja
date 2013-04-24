@@ -22,7 +22,7 @@ Find.find(keyword_src_path) do |path|
           text_jp = data
           text_fetch_flag = false
         else
-          text_en = data.gsub(/([\'\?"\(\)\*\[\]])/, "\\\\\\1")
+          text_en = data.gsub(/([\^\'\?"\(\)\*\[\]])/, "\\\\\\1")
           text_fetch_flag = true
         end
       else

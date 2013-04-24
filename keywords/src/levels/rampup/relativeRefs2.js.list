@@ -1,0 +1,38 @@
+You'll need to use at least one direct reference (hash) to complete this level
+レベルクリアのためには、最低1回はハッシュ名をタイプする必要があります
+
+Relative Refs #2 (~)
+コミットの相対的な指定 2つ目 (~)
+
+### The \"~\" operator
+### \"~\"オペレータ
+
+Say you want to move a lot of levels up in the commit tree. It might be tedious to type `^` several times, so Git also has the tilde (~) operator.
+仮にいくつも前のコミットへと移動する必要があるとします。`^`を何回もタイプするのは骨が折れる場合もありますから、こんな時のためにGitにはチルダ(~)オペレータがあります。
+
+The tilde operator (optionally) takes in a trailing number that specifies the number of parents you would like to ascend. Let's see it in action
+チルダの後に移動したい数を入力して使います。これも動きをみてみましょう。
+
+Let's specify a number of commits back with `~`.
+チルダの後ろに数字をつけてコミットを指定しています。
+
+Boom! So concise -- relative refs are great.
+じゃん！これはシンプル -- 相対的な指定は素晴らしいですね。
+
+### Branch forcing
+### Branch forcing
+
+You're an expert on relative refs now, so let's actually *use* them for something.
+これであなたも相対的な指定の達人です。実践に入りましょう。
+
+One of the most common ways I use relative refs is to move branches around. You can directly reassign a branch to a commit with the `-f` option. So something like:
+私が相対的な指定を最も活用する時は、ブランチを動かす時です。（git branchコマンドの）`-f`オプションを使えば、ブランチ名を直接あるコミットへと付け直すことができます。例えば：
+
+`git branch -f master HEAD~3`
+`git branch -f master HEAD~3`
+
+Moves (by force) the master branch to three parents behind HEAD.
+こうすれば、masterブランチをHEADから数えて3個前の親コミットへと強制的に移動することができます。
+
+To complete this level, move `HEAD`, `master`, and `bugFix` to their goal destinations shown.
+`HEAD`、`master`それから`bugFix`をそれぞれ所定の位置へと移動させて、このレベルをクリアしましょう。

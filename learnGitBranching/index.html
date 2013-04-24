@@ -13,14 +13,14 @@
   <meta property="og:image" content="http://pcottle.github.com/learnGitBranching/assets/learnGitBranching.png"/>
   <meta property="og:description" content="A interactive Git visualization tool to educate and challenge!"/>
 
-	<link rel="stylesheet" href="build/main.96634d2f.css" type="text/css" charset="utf-8">
+	<link rel="stylesheet" href="build/main.a07a2b2b.css" type="text/css" charset="utf-8">
 	<link rel="stylesheet" href="src/style/font-awesome.css" type="text/css" charset="utf-8">
 </head>
 <body>
 
   <!-- The entire interface is within this div -->
   <div id="interfaceWrapper" class="box horizontal flex1">
-    <div id="controls" class="box vertical flex1">
+    <div id="controls" class="box vertical flex1 visBackgroundColor">
       <div id="commandLineHistory" class="box vertical flex3">
           <div class="toolbar box vertical center">
             <div class="controls box horizontal justify">
@@ -60,7 +60,7 @@
       </div>
     </div>
 
-    <div id="mainVisSpace" class="box flex1 horizontal">
+    <div id="mainVisSpace" class="box flex1 horizontal visBackgroundColor">
     </div>
   </div>
 
@@ -105,6 +105,18 @@
       </div>
   </script>
 
+  <script type="text/html" id="helper-bar-template">
+    <% for(var i = 0; i < items.length; i++) { %>
+      <% if (items[i].text) { %>
+        <a data-id="<%= items[i].id %>"><%= items[i].text %></a>
+      <% } else { %>
+        <a data-id="<%= items[i].id %>">
+          <i data-id="<%= items[i].id %>" class="icon-<%= items[i].icon %>"></i>
+        </a>
+      <% } %>
+    <% } %>
+  </script>
+
   <script type="text/html" id="level-toolbar-template">
     <div class="toolbar level-toolbar box vertical center transitionAll hidden">
       <div>
@@ -123,7 +135,7 @@
   </script>
 
   <script type="text/html" id="terminal-window-bare-template">
-    <div class="terminal-window-holder box flex3 vertical transitionTransform slideOut">
+    <div class="terminal-window-holder box flex10 vertical transitionTransform slideOut">
       <div class="wrapper box vertical">
         <div class="toolbar box vertical center">
           <div class="controls box horizontal justify">
@@ -160,10 +172,10 @@
 
   <script type="text/html" id="terminal-window-template">
     <div class="terminal-window box horizontal flex3 transitionAll">
-      <div class="box flex1">
+      <div class="box flex3">
       </div>
 
-      <div class="terminal-window-holder box flex3 vertical transitionTransform">
+      <div class="terminal-window-holder box flex10 vertical transitionTransform">
         <div class="toolbar box vertical center">
           <div class="controls box horizontal justify">
             <div class="box flex1">
@@ -189,7 +201,7 @@
         </div>
       </div>
 
-      <div class="box flex1">
+      <div class="box flex2">
       </div>
     </div>
   </script>
@@ -240,6 +252,8 @@
     </div>
 
     <div class="visHolder box vertical flex1">
+      <div class="visHolderInside box flex1">
+      </div>
     </div>
   </script>
 

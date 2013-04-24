@@ -102,6 +102,79 @@ TreeCompare.prototype.compareBranchesWithinTreesHashAgnostic = function(treeA, t
   return result;
 };
 
+TreeCompare.prototype.evalAsserts = function(tree, assertsPerBranch) {
+  var result = true;
+  _.each(assertsPerBranch, function(asserts, branchName) {
+    result = result && this.evalAssertsOnBranch(tree, branchName, asserts);
+  }, this);
+
+  console.log('EVAL ASSETS was', result);
+  return result;
+};
+
+TreeCompare.prototype.evalAssertsOnBranch = function(tree, branchName, asserts) {
+  tree = this.convertTreeSafe(tree);
+
+  // here is the outline:
+  // * make a data object
+  // * go to the branch given by the key
+  // * traverse upwards, storing the amount of hashes on each in the data object
+  // * then come back and perform functions on data
+  console.log('doing asserts on', branchName);
+
+  if (!tree.branches[branchName]) {
+    return false;
+  }
+
+  var branch = tree.branches[branchName];
+  var queue = [branch.target];
+  var data = {};
+  while (queue.length) {
+    var commitRef = queue.pop();
+    console.log(commitRef);
+    data[this.getBaseRef(commitRef)] = this.getNumHashes(commitRef);
+
+    queue = queue.concat(tree.commits[commitRef].parents);
+  }
+
+  console.log('data is', data);
+  var result = true;
+  _.each(asserts, function(assert) {
+    try {
+      result = result && assert(data);
+    } catch (err) {
+      console.err(err);
+      result = false;
+    }
+  });
+
+  return result;
+};
+
+TreeCompare.prototype.getNumHashes = function(ref) {
+  var regexMap = [
+    [/^C(\d+)([']{0,3})$/, function(bits) {
+      if (!bits[2]) {
+        return 0;
+      }
+      return bits[2].length;
+    }],
+    [/^C(\d+)['][\^](\d+)$/, function(bits) {
+      return Number(bits[2]);
+    }]
+  ];
+
+  for (var i = 0; i < regexMap.length; i++) {
+    var regex = regexMap[i][0];
+    var func = regexMap[i][1];
+    var results = regex.exec(ref);
+    if (results) {
+      return func(results);
+    }
+  }
+  throw new Error('coudlnt parse ref ' + ref);
+};
+
 TreeCompare.prototype.getBaseRef = function(ref) {
   var idRegex = /^C(\d+)/;
   var bits = idRegex.exec(ref);
@@ -117,11 +190,15 @@ TreeCompare.prototype.getRecurseCompareHashAgnostic = function(treeA, treeB) {
 
   // some buildup functions
   var getStrippedCommitCopy = _.bind(function(commit) {
+    if (!commit) { return {}; }
     return _.extend(
       {},
       commit,
-      {id: this.getBaseRef(commit.id)
-    });
+      {
+        id: this.getBaseRef(commit.id),
+        parents: null
+      }
+    );
   }, this);
 
   var isEqual = function(commitA, commitB) {
@@ -148,8 +225,9 @@ TreeCompare.prototype.getRecurseCompare = function(treeA, treeB, options) {
     // we loop through each parent ID. we sort the parent ID's beforehand
     // so the index lookup is valid. for merge commits this will duplicate some of the
     // checking (because we aren't doing graph search) but it's not a huge deal
-    var allParents = _.unique(commitA.parents.concat(commitB.parents));
-    _.each(allParents, function(pAid, index) {
+    var maxNumParents = Math.max(commitA.parents.length, commitB.parents.length);
+    _.each(_.range(maxNumParents), function(index) {
+      var pAid = commitA.parents[index];
       var pBid = commitB.parents[index];
 
       // if treeA or treeB doesn't have this parent,

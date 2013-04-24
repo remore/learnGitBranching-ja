@@ -495,9 +495,10 @@ GitVisuals.prototype.maxWidthRecursive = function(commit) {
   return maxWidth;
 };
 
-GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
-  // I always center myself within my bounds
-  var myWidthPos = (min + max) / 2.0;
+GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max, centerFrac) {
+  centerFrac = (centerFrac === undefined) ? 0.5 : centerFrac;
+  // I always position myself within my bounds
+  var myWidthPos = min + (max - min) * centerFrac;
   commit.get('visNode').get('pos').x = myWidthPos;
 
   if (commit.get('children').length === 0) {
@@ -516,21 +517,43 @@ GitVisuals.prototype.assignBoundsRecursive = function(commit, min, max) {
     }
   }, this);
 
-  var prevBound = min;
+  // TODO: refactor into another method
+  var getCenterFrac = function(index, centerFrac) {
+    if (myLength < 0.99) {
+      if (children.length < 2) {
+        return centerFrac;
+      } else {
+        return 0.5;
+      }
+    }
+    if (children.length < 2) {
+      return 0.5;
+    }
+    // we introduce a VERY specific rule here, to push out
+    // the first "divergence" of the graph
+    if (index === 0) {
+      return 1/3;
+    } else if (index === children.length - 1) {
+      return 2/3;
+    }
+    return centerFrac;
+  };
 
-  // now go through and do everything
-  // TODO: order so the max width children are in the middle!!
-  _.each(children, function(child) {
+  var prevBound = min;
+  _.each(children, function(child, index) {
     if (!child.isMainParent(commit)) {
       return;
     }
 
     var flex = child.get('visNode').getMaxWidthScaled();
     var portion = (flex / totalFlex) * myLength;
+    var thisCenterFrac = getCenterFrac(index, centerFrac);
+
     var childMin = prevBound;
     var childMax = childMin + portion;
-    this.assignBoundsRecursive(child, childMin, childMax);
-    prevBound = childMax;
+
+    this.assignBoundsRecursive(child, childMin, childMax, thisCenterFrac);
+    prevBound = childMin + portion;
   }, this);
 };
 
@@ -662,7 +685,7 @@ GitVisuals.prototype.genResizeFunc = function() {
     _.bind(function(width, height) {
 
       // refresh when we are ready if we are animating som ething
-      if (GLOBAL.isAnimating) {
+      if (false && GLOBAL.isAnimating) {
         var Main = require('../app');
         Main.getEventBaton().trigger('commandSubmitted', 'refresh');
       } else {

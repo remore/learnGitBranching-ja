@@ -1,0 +1,47 @@
+Detach yo' HEAD
+HEADを理解する
+
+Use the label (hash) on the commit for help!
+ラベル(ハッシュ)を使いましょう
+
+## Moving around in Git
+## Gitの基礎固め
+
+Before we get to some of the more advanced features of Git, it's important to understand different ways to move through the commit tree that represents your project.
+Gitの先進的なフィーチャについて学ぶ前に、ツリーの中を自在に移動できるようになっておくと便利です。
+
+Once you're comfortable moving around, your powers with other git commands will be amplified!
+ひとたび自在に動き回れるようになれば、これから学ぶ他のgitコマンドの威力が倍増するでしょう。
+
+## HEAD
+## HEAD
+
+First we have to talk about \"HEAD\". HEAD is the symbolic name for the currently checked out commit -- it's essentially what commit you're working on top of.
+まず\"HEAD\"についてお話します。HEADはいまチェックアウトされているコミットを指す時の呼び方です -- これはあなたが今どのコミットで作業しているかを意味します。
+
+HEAD always points to the most recent commit which is reflected in the working tree. Most git commands which make changes to the working tree will start by changing HEAD.
+HEADは常にツリー上の最後のコミットを指しています。ツリーに変化をもたらすほとんどのgitコマンドは、このHEADを動かすことからその動作を始めます。
+
+Normally HEAD points to a branch name (like bugFix). When you commit, the status of bugFix is altered and this change is visible through HEAD.
+通常HEADは（bugFixといったような）ブランチ名を指しています。あなたがコミットすると、このbugFixブランチの状態が変化しますが、HEADはこの変化を指すように動きます。
+
+Let's see this in action. Here we will reveal HEAD before and after a commit.
+動きを確認してみましょう。コミットする前とした後の都合2回、HEADを出現させます。
+
+See! HEAD was hiding underneath our `master` branch all along.
+わかりましたか？`master`ブランチの下にずっとHEADが隠れていました。
+
+### Detaching HEAD
+### HEADを出現させる
+
+Detaching HEAD just means attaching it to a commit instead of a branch. This is what it looks like beforehand:
+HEADの向き先をブランチではなくてコミットに変えることで、HEADを出現させることができます。前はこうだったのを：
+
+And now it's
+こう変えてやります。
+
+To complete this level, let's detach HEAD from `bugFix` and attach it to the commit instead.
+このレベルの仕上げに、HEADの向き先を`bugFix`からコミットに変えてみて、理解を確認してみましょう。
+
+Specify this commit by its hash. The hash for each commit is displayed on the circle that represents the commit.
+向き先を変えるには、コミットのハッシュを指定します。learn Git Branchingでは簡便のためにハッシュをCで始まる文字列で表現しています。

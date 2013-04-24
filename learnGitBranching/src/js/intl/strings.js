@@ -2,25 +2,29 @@ exports.strings = {
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-finished': {
     '__desc__': 'One of the lines in the next level dialog',
+    'ja': '最後のレベルをクリアしました！すごい！！',
     'en_US': 'Wow! You finished the last level, great!',
     'zh_CN': '我的个天！你完成了最后一关，碉堡了！'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-next': {
     '__desc__': 'One of the lines in the next level dialog',
-    'en_US': 'Would you like to move onto *"{nextLevel}"*, the next level?',
+    'en_US': 'Would you like to move on to *"{nextLevel}"*, the next level?',
+    'ja': '次の章 *"{nextLevel}"* へ進みますか？',
     'zh_CN': '要不前进到下一关 *“{nextLevel}”*？'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-win': {
     '__desc__': 'One of the lines in the next level dialog',
     'en_US': 'Awesome! You matched or exceeded our solution.',
+    'ja': '素晴らしい！このレベルをクリアしましたね。',
     'zh_CN': '牛鼻啊！你达到或者完爆了我们的答案。'
   },
   ///////////////////////////////////////////////////////////////////////////
   'finish-dialog-lose': {
     '__desc__': 'When the user entered more commands than our best, encourage them to do better',
     'en_US': 'See if you can whittle it down to {best} :D',
+    'ja': '模範解答の回数={best}回でクリアする方法も考えてみましょう :D',
     'zh_CN': '试试看你能否在 {best} 之内搞定 :D'
   },
   ///////////////////////////////////////////////////////////////////////////
@@ -174,6 +178,7 @@ exports.strings = {
   'learn-git-branching': {
     '__desc__': 'The title of the app, with spaces',
     'en_US': 'Learn Git Branching',
+    'ja': '日本語版リポジトリ',
     'ko': 'Git 브랜치 배우기',
     'zh_CN': '学习Git分支'
   },
@@ -244,6 +249,16 @@ exports.strings = {
     'zh_CN': '语言重置为默认的 {locale}'
   },
   ///////////////////////////////////////////////////////////////////////////
+  'show-command': {
+    '__desc__': 'command output title from "show"',
+    'en_US': 'Please use one of the following commands for more info:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
+  'show-all-commands': {
+    '__desc__': 'command output title from "show commands"',
+    'en_US': 'Here is a list of all the commmands available:'
+  },
+  ///////////////////////////////////////////////////////////////////////////
   'cd-command': {
     '__desc__': 'dummy command output for the command in the key',
     'en_US': 'Directory changed to "/directories/dont/matter/in/this/demo"',
@@ -300,7 +315,7 @@ exports.strings = {
   ///////////////////////////////////////////////////////////////////////////
   'already-solved': {
     '__desc__': 'When you play in a level that is already solved',
-    'en_US': 'You have alreaady solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
+    'en_US': 'You have already solved this level, try other levels with "levels" or go back to sandbox with "sandbox"',
     'zh_CN': '你已经解决了本关，输入 "levels" 尝试其他关卡，或者输入 "sandbox" 回到沙盒中'
   },
   ///////////////////////////////////////////////////////////////////////////
